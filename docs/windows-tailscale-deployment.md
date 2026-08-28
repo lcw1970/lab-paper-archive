@@ -34,6 +34,22 @@ wsl --install
 wsl --update
 ```
 
+### `wsl --install` 오류 또는 멈춤 해결
+
+`wsl --install`이 진행률 초반에서 오래 멈추거나 `0x800d3805` 오류가 나면, 자동 설치를 반복하지 말고 다음 두 Windows 기능을 수동으로 활성화합니다. 관리자 PowerShell에서 **한 줄씩** 실행합니다.
+
+```powershell
+dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+```
+
+```powershell
+dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+```
+
+두 명령이 성공하면 PC를 재부팅합니다. 재부팅 후 `winver`로 Windows 버전과 OS 빌드를 확인합니다. WSL 2는 Windows 10 버전 2004(빌드 19041) 이상 또는 Windows 11이 필요합니다. 구형 Windows에서는 Windows Update를 먼저 완료합니다.
+
+명령 옵션은 반드시 하이픈 두 개(`--`)를 사용합니다. 예를 들어 `wsl --install`이며, `---install`처럼 세 개를 쓰면 안 됩니다. 오래된 WSL에서는 `wsl --update` 옵션이 아직 표시되지 않을 수 있으며, 이 경우 위 수동 활성화와 재부팅을 먼저 완료합니다.
+
 그 다음 Docker Desktop for Windows를 설치합니다. 설치 화면에서 **Use WSL 2 instead of Hyper-V**를 선택하고, 실행 후 Settings > General에서 **Use the WSL 2 based engine**이 활성화됐는지 확인합니다.
 
 Docker Desktop Settings > General에서 다음도 켭니다.
