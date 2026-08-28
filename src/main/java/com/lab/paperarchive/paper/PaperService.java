@@ -32,7 +32,7 @@ public class PaperService {
         StoredFile stored = storageService.store(request.getFile());
 
         // 2) 중복 검사 — DB UNIQUE 제약과 이중 방어
-        paperFileRepository.findBySha256(stored.sha256()).ifPresent(existing -> {
+        paperFileRepository.findBySha256AndPaper_DeletedAtIsNull(stored.sha256()).ifPresent(existing -> {
             storageService.moveToTrash(stored.relativePath());
             throw new BusinessException(
                     "이미 등록된 논문입니다: " + existing.getPaper().getTitle());

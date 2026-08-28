@@ -7,7 +7,8 @@ import java.util.Optional;
 
 public interface PaperFileRepository extends JpaRepository<PaperFile, Long> {
 
-    Optional<PaperFile> findBySha256(String sha256);
+    /** 삭제되지 않은 논문만 중복 업로드로 판단한다. */
+    Optional<PaperFile> findBySha256AndPaper_DeletedAtIsNull(String sha256);
 
     List<PaperFile> findByPaperIdOrderByVersionDesc(Long paperId);
 }
