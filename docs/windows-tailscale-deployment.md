@@ -94,7 +94,7 @@ docker compose --env-file .env -f docker/compose.prod.yml ps
 docker compose --env-file .env -f docker/compose.prod.yml logs -f app
 ```
 
-앱이 정상 기동하면 브라우저에서 랩 PC의 `http://127.0.0.1:8080`으로 먼저 로그인 화면이 나오는지 확인합니다. 이 주소는 랩 PC에서만 동작해야 정상입니다.
+앱이 정상 기동하면 브라우저에서 랩 PC의 `http://127.0.0.1:8080`으로 로그인 화면이 표시되는지만 확인합니다. 운영 로그인은 다음 단계의 Tailscale HTTPS 주소에서 진행합니다. 이 주소는 랩 PC에서만 동작해야 정상입니다.
 
 ## 7. Tailscale HTTPS 연결
 
