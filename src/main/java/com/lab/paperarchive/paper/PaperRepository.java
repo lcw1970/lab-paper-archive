@@ -22,6 +22,7 @@ public interface PaperRepository extends JpaRepository<Paper, Long> {
     @Query("""
            select p from Paper p
            left join fetch p.uploader
+           left join fetch p.folder
            left join fetch p.tags
            where p.id = :id and p.deletedAt is null
            """)
