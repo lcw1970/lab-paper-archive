@@ -12,15 +12,22 @@
 
 ## 2. 폴더 만들기
 
-관리자 PowerShell에서 아래를 한 번 실행합니다.
+관리자 PowerShell에서 아래 명령을 **한 줄씩 따로** 실행합니다. 여러 줄 명령을 한 번에 붙여넣지 마세요.
 
 ```powershell
-New-Item -ItemType Directory -Force `
-  D:\lab-paper-archive\papers, `
-  D:\lab-paper-archive\postgres, `
-  D:\lab-paper-archive\logs, `
-  D:\lab-paper-archive\backups, `
-  D:\lab-paper-archive\app
+New-Item -ItemType Directory -Force D:\lab-paper-archive\papers
+```
+
+```powershell
+New-Item -ItemType Directory -Force D:\lab-paper-archive\postgres
+```
+
+```powershell
+New-Item -ItemType Directory -Force D:\lab-paper-archive\logs
+```
+
+```powershell
+New-Item -ItemType Directory -Force D:\lab-paper-archive\backups
 ```
 
 `papers`와 `postgres`는 절대 지우지 마세요. Docker 컨테이너를 재생성해도 논문과 DB가 남는 영구 저장소입니다.
@@ -76,13 +83,25 @@ docker compose version
 
 ## 5. 배포 파일과 비밀값 준비
 
-이 프로젝트 전체를 `D:\lab-paper-archive\app`에 복사하거나 Git으로 clone합니다. 그 폴더에서 `.env.example`을 `.env`로 복사해 실제 값을 입력합니다.
+먼저 Git for Windows를 설치합니다. 프로젝트는 아래처럼 `app`이라는 폴더명으로 clone합니다. 명령은 한 줄씩 실행합니다.
+
+```powershell
+Set-Location D:\lab-paper-archive
+```
+
+```powershell
+git clone https://github.com/lcw1970/lab-paper-archive.git app
+```
+
+그 다음 프로젝트 폴더에서 `.env.example`을 `.env`로 복사해 실제 값을 입력합니다.
 
 ```powershell
 Set-Location D:\lab-paper-archive\app
 Copy-Item .env.example .env
 notepad .env
 ```
+
+이미 `git clone` 명령에 마지막 `app`을 빼고 실행했다면 프로젝트 폴더는 `D:\lab-paper-archive\lab-paper-archive`입니다. 이후의 `app` 경로 대신 그 경로를 사용합니다.
 
 `.env`의 예시는 다음처럼 설정합니다. 비밀번호는 각각 길고 서로 다른 무작위 값으로 바꾸세요.
 
