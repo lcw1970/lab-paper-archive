@@ -6,8 +6,14 @@
 <head><title>홈</title></head>
 <body>
 <main layout:fragment="content" class="container">
-    <h1>환영합니다, <span sec:authentication="principal.name">이름</span>님</h1>
-    <p class="sub">논문 목록·업로드 기능은 다음 단계에서 추가됩니다.</p>
+    <section class="home-hero">
+        <p class="eyebrow">LABORATORY RESEARCH LIBRARY</p>
+        <h1>PAPER<br>ARCHIVE</h1>
+        <div class="hero-bottom">
+            <p>랩의 논문을 모으고, 찾고, 함께 읽습니다.</p>
+            <a class="btn primary" th:href="@{/papers}">논문 둘러보기 ↗</a>
+        </div>
+    </section>
 </main>
 </body>
 </html>

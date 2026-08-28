@@ -6,15 +6,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title layout:title-pattern="$CONTENT_TITLE · 논문 아카이브">논문 아카이브</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css(v=20260828)}">
 </head>
 <body>
 <header class="topbar" sec:authorize="isAuthenticated()">
-    <a class="brand" th:href="@{/}">논문 아카이브</a>
+    <a class="brand" th:href="@{/}" aria-label="논문 아카이브 홈">P.</a>
     <nav>
         <a th:href="@{/papers}">논문 목록</a>
         <a th:href="@{/admin/users}" sec:authorize="hasRole('ADMIN')">회원 관리</a>
-        <span class="me" sec:authentication="principal.name">이름</span>
+        <span class="me"><span sec:authentication="principal.name">이름</span> / LAB</span>
         <form th:action="@{/logout}" method="post" class="inline">
             <button type="submit" class="link-btn">로그아웃</button>
         </form>
@@ -24,7 +24,7 @@
 <main layout:fragment="content"></main>
 
 <footer class="footer">
-    본 자료는 랩 내부 연구 목적으로만 이용하며 외부 배포를 금합니다.
+    PAPER ARCHIVE · 랩 내부 연구 목적으로만 이용하며 외부 배포를 금합니다.
 </footer>
 </body>
 </html>
