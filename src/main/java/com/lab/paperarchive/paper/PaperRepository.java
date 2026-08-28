@@ -47,6 +47,7 @@ public interface PaperRepository extends JpaRepository<Paper, Long> {
                   or lower(p.memo)    like lower(concat('%', :kw, '%')))
              and (:tag = '' or lower(t.name) = lower(:tag))
              and (:folderId is null or p.folder.id = :folderId)
+             and (:uncategorized = false or p.folder is null)
            """,
             countQuery = """
            select count(distinct p) from Paper p
@@ -58,10 +59,12 @@ public interface PaperRepository extends JpaRepository<Paper, Long> {
                   or lower(p.memo)    like lower(concat('%', :kw, '%')))
              and (:tag = '' or lower(t.name) = lower(:tag))
              and (:folderId is null or p.folder.id = :folderId)
+             and (:uncategorized = false or p.folder is null)
            """)
     Page<Paper> search(@Param("kw") String keyword,
                        @Param("tag") String tag,
                        @Param("folderId") Long folderId,
+                       @Param("uncategorized") boolean uncategorized,
                        Pageable pageable);
 
     @Query("""

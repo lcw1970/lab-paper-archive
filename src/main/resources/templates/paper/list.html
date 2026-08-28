@@ -9,47 +9,73 @@
 <main layout:fragment="content" class="container">
 
     <div class="list-header">
-        <h1>논문 목록</h1>
+        <h1 th:text="${browseMode} ? '논문 폴더' : (${selectedFolderName} ?: (${uncategorized} ? '미분류' : '논문 목록'))">논문 폴더</h1>
         <a class="btn primary" th:href="@{/papers/upload}">+ 논문 등록</a>
     </div>
 
     <div class="alert info" th:if="${message}" th:text="${message}"></div>
     <div class="alert error" th:if="${error}" th:text="${error}"></div>
 
-    <form class="search-bar" th:action="@{/papers}" method="get">
+    <section class="folder-browser" th:if="${browseMode}">
+        <p class="folder-intro">폴더를 열어 그 안의 논문을 확인하세요.</p>
+        <div class="folder-grid">
+            <a class="folder-card" th:each="f : ${folders}" th:href="@{/papers(folder=${f.id})}">
+                <span class="folder-mark">▰</span>
+                <span class="folder-card-name" th:text="${f.name}">폴더 이름</span>
+                <span class="folder-open">열기 →</span>
+            </a>
+            <a class="folder-card muted" th:href="@{/papers(uncategorized=true)}">
+                <span class="folder-mark">▱</span>
+                <span class="folder-card-name">미분류</span>
+                <span class="folder-open">열기 →</span>
+            </a>
+        </div>
+
+        <form class="folder-create" th:action="@{/papers/folders}" method="post">
+            <label for="folderName">새 폴더</label>
+            <input id="folderName" name="name" maxlength="100" required
+                   placeholder="예: 지압강도 관련" autocomplete="off">
+            <button type="submit" class="btn">폴더 만들기</button>
+        </form>
+    </section>
+
+    <a class="back" th:if="${!browseMode}" th:href="@{/papers}">← 폴더 목록</a>
+
+    <form class="search-bar" th:action="@{/papers}" method="get" th:if="${!browseMode}">
         <input type="text" name="q" th:value="${q}"
                placeholder="제목 · 저자 · 메모 검색" autocomplete="off">
         <input type="hidden" name="tag" th:value="${tag}">
-        <select name="folder" aria-label="폴더 선택">
+        <input type="hidden" name="uncategorized" th:value="${uncategorized}">
+        <select name="folder" aria-label="폴더 선택" th:if="${!uncategorized}">
             <option value="">전체 폴더</option>
             <option th:each="f : ${folders}" th:value="${f.id}" th:text="${f.name}"
                     th:selected="${folder != null and folder == f.id}">폴더</option>
         </select>
         <button type="submit" class="btn">검색</button>
         <a class="btn ghost" th:href="@{/papers}"
-           th:if="${q != null or tag != null or folder != null}">초기화</a>
+           th:if="${q != null or tag != null or folder != null or uncategorized}">초기화</a>
     </form>
 
-    <div class="tag-filter" th:if="${!#lists.isEmpty(tags)}">
+    <div class="tag-filter" th:if="${!browseMode and !#lists.isEmpty(tags)}">
         <a th:each="t : ${tags}"
-           th:href="@{/papers(tag=${t.name}, q=${q}, folder=${folder})}"
+           th:href="@{/papers(tag=${t.name}, q=${q}, folder=${folder}, uncategorized=${uncategorized})}"
            th:text="${t.name}"
            th:class="${tag != null and tag == t.name} ? 'active' : ''">태그</a>
     </div>
 
-    <p class="result-count">
+    <p class="result-count" th:if="${!browseMode}">
         총 <strong th:text="${papers.totalElements}">0</strong>편
         <span th:if="${q != null}" th:text="'· 검색어: ' + ${q}"></span>
     </p>
 
-    <form class="folder-create" th:action="@{/papers/folders}" method="post">
+    <form class="folder-create" th:action="@{/papers/folders}" method="post" th:if="${!browseMode}">
         <label for="folderName">새 폴더</label>
         <input id="folderName" name="name" maxlength="100" required
                placeholder="예: 2026 논문 세미나" autocomplete="off">
         <button type="submit" class="btn">폴더 만들기</button>
     </form>
 
-    <form th:action="@{/papers/bulk-download}" method="post" id="bulkForm">
+    <form th:if="${!browseMode}" th:action="@{/papers/bulk-download}" method="post" id="bulkForm">
         <div class="bulk-bar">
             <button type="submit" class="btn bulk-action" disabled data-action="download">
                 선택 다운로드 (<span id="cnt">0</span>)
@@ -92,12 +118,12 @@
         </table>
     </form>
 
-    <nav class="pagination" th:if="${papers.totalPages > 1}">
+    <nav class="pagination" th:if="${!browseMode and papers.totalPages > 1}">
         <a th:if="${!papers.first}"
-           th:href="@{/papers(page=${papers.number - 1}, q=${q}, tag=${tag}, folder=${folder})}">← 이전</a>
+           th:href="@{/papers(page=${papers.number - 1}, q=${q}, tag=${tag}, folder=${folder}, uncategorized=${uncategorized})}">← 이전</a>
         <span th:text="${papers.number + 1} + ' / ' + ${papers.totalPages}"></span>
         <a th:if="${!papers.last}"
-           th:href="@{/papers(page=${papers.number + 1}, q=${q}, tag=${tag}, folder=${folder})}">다음 →</a>
+           th:href="@{/papers(page=${papers.number + 1}, q=${q}, tag=${tag}, folder=${folder}, uncategorized=${uncategorized})}">다음 →</a>
     </nav>
 
     <script>
@@ -108,7 +134,7 @@
 
         function refresh() {
             const n = document.querySelectorAll('.row-chk:checked').length;
-            cnt.textContent = n;
+            if (cnt) cnt.textContent = n;
             buttons.forEach(function (button) { button.disabled = (n === 0); });
             if (all) all.checked = (n > 0 && n === rows.length);
         }
@@ -121,7 +147,8 @@
         }
         rows.forEach(function (c) { c.addEventListener('change', refresh); });
 
-        document.getElementById('bulkForm').addEventListener('submit', function (e) {
+        const bulkForm = document.getElementById('bulkForm');
+        if (bulkForm) bulkForm.addEventListener('submit', function (e) {
             const n = document.querySelectorAll('.row-chk:checked').length;
             if (n === 0) { e.preventDefault(); return; }
             const action = e.submitter?.dataset.action;

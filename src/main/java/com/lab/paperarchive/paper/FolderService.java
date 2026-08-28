@@ -19,6 +19,12 @@ public class FolderService {
         return folderRepository.findAllByOrderByNameAsc();
     }
 
+    @Transactional(readOnly = true)
+    public Folder findById(Long id) {
+        return folderRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("존재하지 않는 폴더입니다."));
+    }
+
     @Transactional
     public void create(String rawName) {
         String name = StringUtils.hasText(rawName) ? rawName.trim() : "";

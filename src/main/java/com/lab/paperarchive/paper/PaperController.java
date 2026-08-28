@@ -12,6 +12,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -30,13 +31,19 @@ public class PaperController {
     public String list(@RequestParam(required = false) String q,
                        @RequestParam(required = false) String tag,
                        @RequestParam(required = false) Long folder,
+                       @RequestParam(defaultValue = "false") boolean uncategorized,
                        @PageableDefault(size = 20, sort = "createdAt",
                                direction = Sort.Direction.DESC) Pageable pageable,
                        Model model) {
-        model.addAttribute("papers", paperQueryService.search(q, tag, folder, pageable));
+        boolean browseMode = folder == null && !uncategorized
+                && !StringUtils.hasText(q) && !StringUtils.hasText(tag);
+        model.addAttribute("papers", paperQueryService.search(q, tag, folder, uncategorized, pageable));
         model.addAttribute("q", q);
         model.addAttribute("tag", tag);
         model.addAttribute("folder", folder);
+        model.addAttribute("uncategorized", uncategorized);
+        model.addAttribute("browseMode", browseMode);
+        model.addAttribute("selectedFolderName", folder == null ? null : folderService.findById(folder).getName());
         model.addAttribute("tags", tagRepository.findAll());
         model.addAttribute("folders", folderService.findAll());
         return "paper/list";
