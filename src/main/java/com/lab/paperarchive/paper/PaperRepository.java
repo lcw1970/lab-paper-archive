@@ -17,6 +17,8 @@ public interface PaperRepository extends JpaRepository<Paper, Long> {
 
     long countByDeletedAtIsNull();
 
+    List<Paper> findAllByIdInAndDeletedAtIsNull(List<Long> ids);
+
     @Query("""
            select p from Paper p
            left join fetch p.uploader
@@ -35,6 +37,7 @@ public interface PaperRepository extends JpaRepository<Paper, Long> {
     @Query(value = """
            select distinct p from Paper p
            left join fetch p.uploader
+           left join fetch p.folder
            left join p.tags t
            where p.deletedAt is null
              and (:kw = ''
@@ -42,6 +45,7 @@ public interface PaperRepository extends JpaRepository<Paper, Long> {
                   or lower(p.authors) like lower(concat('%', :kw, '%'))
                   or lower(p.memo)    like lower(concat('%', :kw, '%')))
              and (:tag = '' or lower(t.name) = lower(:tag))
+             and (:folderId is null or p.folder.id = :folderId)
            """,
             countQuery = """
            select count(distinct p) from Paper p
@@ -52,9 +56,11 @@ public interface PaperRepository extends JpaRepository<Paper, Long> {
                   or lower(p.authors) like lower(concat('%', :kw, '%'))
                   or lower(p.memo)    like lower(concat('%', :kw, '%')))
              and (:tag = '' or lower(t.name) = lower(:tag))
+             and (:folderId is null or p.folder.id = :folderId)
            """)
     Page<Paper> search(@Param("kw") String keyword,
                        @Param("tag") String tag,
+                       @Param("folderId") Long folderId,
                        Pageable pageable);
 
     @Query("""

@@ -24,17 +24,21 @@ public class PaperController {
     private final PaperService paperService;
     private final PaperQueryService paperQueryService;
     private final TagRepository tagRepository;
+    private final FolderService folderService;
 
     @GetMapping
     public String list(@RequestParam(required = false) String q,
                        @RequestParam(required = false) String tag,
+                       @RequestParam(required = false) Long folder,
                        @PageableDefault(size = 20, sort = "createdAt",
                                direction = Sort.Direction.DESC) Pageable pageable,
                        Model model) {
-        model.addAttribute("papers", paperQueryService.search(q, tag, pageable));
+        model.addAttribute("papers", paperQueryService.search(q, tag, folder, pageable));
         model.addAttribute("q", q);
         model.addAttribute("tag", tag);
+        model.addAttribute("folder", folder);
         model.addAttribute("tags", tagRepository.findAll());
+        model.addAttribute("folders", folderService.findAll());
         return "paper/list";
     }
 
@@ -43,6 +47,7 @@ public class PaperController {
         if (!model.containsAttribute("form")) {
             model.addAttribute("form", new PaperUploadRequest());
         }
+        model.addAttribute("folders", folderService.findAll());
         return "paper/upload";
     }
 
@@ -50,8 +55,10 @@ public class PaperController {
     public String upload(@Valid @ModelAttribute("form") PaperUploadRequest form,
                          BindingResult bindingResult,
                          @AuthenticationPrincipal LabUserDetails principal,
+                         Model model,
                          RedirectAttributes ra) {
         if (bindingResult.hasErrors()) {
+            model.addAttribute("folders", folderService.findAll());
             return "paper/upload";
         }
         Long id = paperService.upload(form, principal.getUserId());
@@ -69,6 +76,21 @@ public class PaperController {
     public String delete(@PathVariable Long id, RedirectAttributes ra) {
         paperService.softDelete(id);
         ra.addFlashAttribute("message", "휴지통으로 이동했습니다.");
+        return "redirect:/papers";
+    }
+
+    @PostMapping("/bulk-delete")
+    public String bulkDelete(@RequestParam(name = "ids", required = false) java.util.List<Long> ids,
+                             RedirectAttributes ra) {
+        int count = paperService.softDeleteAll(ids == null ? java.util.List.of() : ids);
+        ra.addFlashAttribute("message", count + "편을 휴지통으로 이동했습니다.");
+        return "redirect:/papers";
+    }
+
+    @PostMapping("/folders")
+    public String createFolder(@RequestParam String name, RedirectAttributes ra) {
+        folderService.create(name);
+        ra.addFlashAttribute("message", "폴더를 만들었습니다.");
         return "redirect:/papers";
     }
 }

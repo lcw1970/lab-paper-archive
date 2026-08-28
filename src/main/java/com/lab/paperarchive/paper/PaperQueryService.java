@@ -16,10 +16,10 @@ public class PaperQueryService {
     private final PaperRepository paperRepository;
 
     @Transactional(readOnly = true)
-    public Page<PaperListItem> search(String keyword, String tag, Pageable pageable) {
+    public Page<PaperListItem> search(String keyword, String tag, Long folderId, Pageable pageable) {
         String kw = StringUtils.hasText(keyword) ? keyword.trim() : "";
         String tg = StringUtils.hasText(tag) ? tag.trim() : "";
-        return paperRepository.search(kw, tg, pageable).map(PaperListItem::from);
+        return paperRepository.search(kw, tg, folderId, pageable).map(PaperListItem::from);
     }
 
     @Transactional(readOnly = true)

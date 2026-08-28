@@ -31,6 +31,12 @@
         <input type="text" id="tags" th:field="*{tags}"
                placeholder="딥러닝, 세그멘테이션 (쉼표 구분)" autocomplete="off">
 
+        <label for="folderId">폴더</label>
+        <select id="folderId" th:field="*{folderId}">
+            <option value="">미분류</option>
+            <option th:each="f : ${folders}" th:value="${f.id}" th:text="${f.name}">폴더</option>
+        </select>
+
         <label for="memo">메모</label>
         <textarea id="memo" th:field="*{memo}" rows="3"
                   placeholder="랩 내부 코멘트"></textarea>

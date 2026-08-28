@@ -22,6 +22,7 @@ public class PaperService {
     private final PaperRepository paperRepository;
     private final PaperFileRepository paperFileRepository;
     private final TagRepository tagRepository;
+    private final FolderRepository folderRepository;
     private final UserRepository userRepository;
     private final StorageService storageService;
 
@@ -47,6 +48,12 @@ public class PaperService {
                 .uploader(uploader)
                 .build();
 
+        if (request.getFolderId() != null) {
+            Folder folder = folderRepository.findById(request.getFolderId())
+                    .orElseThrow(() -> new BusinessException("선택한 폴더를 찾을 수 없습니다."));
+            paper.assignFolder(folder);
+        }
+
 
         paper.addFile(PaperFile.builder()
                 .storedPath(stored.relativePath())
@@ -70,6 +77,22 @@ public class PaperService {
                 .orElseThrow(() -> new BusinessException("논문을 찾을 수 없습니다."));
         paper.softDelete();
         // 실제 파일은 즉시 지우지 않는다. 휴지통 배치가 30일 후 정리한다.
+    }
+
+    @Transactional
+    public int softDeleteAll(Iterable<Long> ids) {
+        java.util.List<Long> requestedIds = new java.util.ArrayList<>();
+        ids.forEach(requestedIds::add);
+        if (requestedIds.isEmpty()) {
+            throw new BusinessException("선택된 논문이 없습니다.");
+        }
+
+        java.util.List<Paper> papers = paperRepository.findAllByIdInAndDeletedAtIsNull(requestedIds);
+        if (papers.isEmpty()) {
+            throw new BusinessException("삭제할 논문을 찾을 수 없습니다.");
+        }
+        papers.forEach(Paper::softDelete);
+        return papers.size();
     }
 
     private void attachTags(Paper paper, String rawTags) {

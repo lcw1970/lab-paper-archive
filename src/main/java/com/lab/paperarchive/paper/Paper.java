@@ -56,6 +56,10 @@ public class Paper extends BaseTimeEntity {
     @JoinColumn(name = "uploader_id")
     private User uploader;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "folder_id")
+    private Folder folder;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
@@ -93,6 +97,7 @@ public class Paper extends BaseTimeEntity {
 
     public void addTag(Tag tag)    { this.tags.add(tag); }
     public void clearTags()        { this.tags.clear(); }
+    public void assignFolder(Folder folder) { this.folder = folder; }
 
     /** 다음 버전 번호 — 수정본 업로드 시 사용 */
     public int nextVersion() {

@@ -22,5 +22,7 @@ public class PaperUploadRequest {
     @Size(max = 300)
     private String tags;
 
+    private Long folderId;
+
     private String memo;
 }

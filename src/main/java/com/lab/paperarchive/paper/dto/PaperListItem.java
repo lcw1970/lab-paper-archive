@@ -8,6 +8,7 @@ public record PaperListItem(
         Long id,
         String title,
         String authors,
+        String folderName,
         String uploaderName,
         LocalDateTime createdAt
 ) {
@@ -16,6 +17,7 @@ public record PaperListItem(
                 p.getId(),
                 p.getTitle(),
                 p.getAuthors(),
+                p.getFolder() != null ? p.getFolder().getName() : "미분류",
                 p.getUploader() != null ? p.getUploader().getName() : "-",
                 p.getCreatedAt()
         );
