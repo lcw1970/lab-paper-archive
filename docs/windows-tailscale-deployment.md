@@ -136,7 +136,7 @@ docker compose --env-file .env -f docker/compose.prod.yml logs -f app
 PowerShell에서 아래 명령을 실행합니다. 처음 실행 시 HTTPS 사용 승인을 위한 링크가 표시되면 브라우저에서 승인합니다.
 
 ```powershell
-tailscale serve --https=443 http://127.0.0.1:8080
+tailscale serve --bg --https=443 http://127.0.0.1:8080
 tailscale serve status
 ```
 
@@ -158,10 +158,26 @@ docker compose --env-file .env -f docker/compose.prod.yml ps
 docker compose --env-file .env -f docker/compose.prod.yml logs -f app
 
 # 코드 업데이트 후 재배포
+Set-Location D:\lab-paper-archive\app
+git pull
 docker compose --env-file .env -f docker/compose.prod.yml up -d --build
 
 # 중지 (데이터를 지우지 않음)
 docker compose --env-file .env -f docker/compose.prod.yml down
+```
+
+처음 clone할 때 마지막 `app`을 생략했다면, 위 `Set-Location`의 `app` 대신 `lab-paper-archive`를 사용합니다. 예를 들어 현재 설치 경로가 `D:\lab-paper-archive\lab-paper-archive`라면 다음 세 줄을 한 줄씩 실행합니다.
+
+```powershell
+Set-Location D:\lab-paper-archive\lab-paper-archive
+```
+
+```powershell
+git pull
+```
+
+```powershell
+docker compose --env-file .env -f docker/compose.prod.yml up -d --build
 ```
 
 `down -v`, Docker Desktop의 Reset to factory defaults, `D:\lab-paper-archive\postgres`와 `papers` 폴더 삭제는 데이터 삭제로 이어질 수 있으니 실행하지 마세요.
