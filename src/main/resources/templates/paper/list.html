@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>논문 목록</title>
+</head>
+<body>
+<main layout:fragment="content" class="container">
+
+    <div class="list-header">
+        <h1>논문 목록</h1>
+        <a class="btn primary" th:href="@{/papers/upload}">+ 논문 등록</a>
+    </div>
+
+    <div class="alert info" th:if="${message}" th:text="${message}"></div>
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+
+    <form class="search-bar" th:action="@{/papers}" method="get">
+        <input type="text" name="q" th:value="${q}"
+               placeholder="제목 · 저자 · 메모 검색" autocomplete="off">
+        <input type="hidden" name="tag" th:value="${tag}">
+        <button type="submit" class="btn">검색</button>
+        <a class="btn ghost" th:href="@{/papers}"
+           th:if="${q != null or tag != null}">초기화</a>
+    </form>
+
+    <div class="tag-filter" th:if="${!#lists.isEmpty(tags)}">
+        <a th:each="t : ${tags}"
+           th:href="@{/papers(tag=${t.name}, q=${q})}"
+           th:text="${t.name}"
+           th:class="${tag != null and tag == t.name} ? 'active' : ''">태그</a>
+    </div>
+
+    <p class="result-count">
+        총 <strong th:text="${papers.totalElements}">0</strong>편
+        <span th:if="${q != null}" th:text="'· 검색어: ' + ${q}"></span>
+    </p>
+
+    <form th:action="@{/papers/bulk-download}" method="post" id="bulkForm">
+        <div class="bulk-bar">
+            <button type="submit" class="btn" id="bulkBtn" disabled>
+                선택 다운로드 (<span id="cnt">0</span>)
+            </button>
+            <span class="hint">최대 50편 · 다운로드 기록이 남습니다</span>
+        </div>
+
+        <table>
+            <thead>
+            <tr>
+                <th class="chk"><input type="checkbox" id="checkAll"></th>
+                <th>제목</th>
+                <th>저자</th>
+                <th>등록자</th>
+                <th>등록일</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${papers.content}">
+                <td class="chk">
+                    <input type="checkbox" name="ids" th:value="${p.id}" class="row-chk">
+                </td>
+                <td>
+                    <a th:href="@{/papers/{id}(id=${p.id})}" th:text="${p.title}" class="title-link"></a>
+                </td>
+                <td th:text="${p.authors} ?: '-'"></td>
+                <td th:text="${p.uploaderName}"></td>
+                <td th:text="${#temporals.format(p.createdAt, 'yyyy-MM-dd')}"></td>
+            </tr>
+            <tr th:if="${papers.isEmpty()}">
+                <td colspan="5" class="empty">결과가 없습니다.</td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+
+    <nav class="pagination" th:if="${papers.totalPages > 1}">
+        <a th:if="${!papers.first}"
+           th:href="@{/papers(page=${papers.number - 1}, q=${q}, tag=${tag})}">← 이전</a>
+        <span th:text="${papers.number + 1} + ' / ' + ${papers.totalPages}"></span>
+        <a th:if="${!papers.last}"
+           th:href="@{/papers(page=${papers.number + 1}, q=${q}, tag=${tag})}">다음 →</a>
+    </nav>
+
+    <script>
+        const rows = document.querySelectorAll('.row-chk');
+        const all  = document.getElementById('checkAll');
+        const btn  = document.getElementById('bulkBtn');
+        const cnt  = document.getElementById('cnt');
+
+        function refresh() {
+            const n = document.querySelectorAll('.row-chk:checked').length;
+            cnt.textContent = n;
+            btn.disabled = (n === 0);
+            if (all) all.checked = (n > 0 && n === rows.length);
+        }
+
+        if (all) {
+            all.addEventListener('change', function () {
+                rows.forEach(function (c) { c.checked = all.checked; });
+                refresh();
+            });
+        }
+        rows.forEach(function (c) { c.addEventListener('change', refresh); });
+
+        document.getElementById('bulkForm').addEventListener('submit', function (e) {
+            const n = document.querySelectorAll('.row-chk:checked').length;
+            if (n === 0) { e.preventDefault(); return; }
+            if (n > 50) { e.preventDefault(); alert('한 번에 최대 50편까지 받을 수 있습니다.'); return; }
+            if (!confirm(n + '편을 다운로드합니다. 다운로드 기록이 남습니다.')) { e.preventDefault(); }
+        });
+
+        refresh();
+    </script>
+
+</main>
+</body>
+</html>

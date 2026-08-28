@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head><title>회원 관리</title></head>
+<body>
+<main layout:fragment="content" class="container">
+    <h1>회원 관리</h1>
+
+    <div class="alert info" th:if="${message}" th:text="${message}"></div>
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+
+    <h2>승인 대기 <span class="badge" th:text="${#lists.size(pendingUsers)}">0</span></h2>
+    <p class="sub" th:if="${#lists.isEmpty(pendingUsers)}">대기 중인 신청이 없습니다.</p>
+    <table th:unless="${#lists.isEmpty(pendingUsers)}">
+        <thead><tr><th>이메일</th><th>이름</th><th>신청일</th><th></th></tr></thead>
+        <tbody>
+        <tr th:each="u : ${pendingUsers}">
+            <td th:text="${u.email}"></td>
+            <td th:text="${u.name}"></td>
+            <td th:text="${#temporals.format(u.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+            <td>
+                <form th:action="@{/admin/users/{id}/approve(id=${u.id})}" method="post" class="inline">
+                    <button type="submit" class="primary small">승인</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>전체 회원</h2>
+    <table>
+        <thead><tr><th>이메일</th><th>이름</th><th>권한</th><th>상태</th><th>최근 접속</th><th></th></tr></thead>
+        <tbody>
+        <tr th:each="u : ${allUsers}">
+            <td th:text="${u.email}"></td>
+            <td th:text="${u.name}"></td>
+            <td th:text="${u.role}"></td>
+            <td><span class="status" th:classappend="${u.status}" th:text="${u.status}"></span></td>
+            <td th:text="${u.lastLoginAt != null} ? ${#temporals.format(u.lastLoginAt, 'yyyy-MM-dd HH:mm')} : '-'"></td>
+            <td>
+                <form th:if="${u.status.name() == 'ACTIVE'}"
+                      th:action="@{/admin/users/{id}/suspend(id=${u.id})}" method="post" class="inline">
+                    <button type="submit" class="danger small">정지</button>
+                </form>
+                <form th:if="${u.status.name() == 'SUSPENDED'}"
+                      th:action="@{/admin/users/{id}/activate(id=${u.id})}" method="post" class="inline">
+                    <button type="submit" class="small">재개</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

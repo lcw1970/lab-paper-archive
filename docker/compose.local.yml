@@ -1,0 +1,28 @@
+# Mac 개발용 - PostgreSQL만 띄웁니다.
+# 앱은 IntelliJ에서 직접 실행합니다.
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: papers-db-local
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: papers_dev
+      POSTGRES_USER: papers
+      POSTGRES_PASSWORD: devpassword
+      TZ: Asia/Seoul
+      # 한글 논문 제목 정렬/검색을 위한 로케일 설정
+      LANG: ko_KR.utf8
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
+    ports:
+      - "5433:5432"          # Mac 로컬 Postgres와 충돌 방지
+    volumes:
+      - papers-db-local-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U papers -d papers_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  papers-db-local-data:

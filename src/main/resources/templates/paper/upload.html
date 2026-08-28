@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>논문 등록</title>
+</head>
+<body>
+<main layout:fragment="content" class="container narrow">
+
+    <h1>논문 등록</h1>
+
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+
+    <form th:action="@{/papers/upload}" method="post" enctype="multipart/form-data"
+          th:object="${form}" id="uploadForm">
+
+        <label for="file">PDF 파일 *</label>
+        <input type="file" id="file" name="file" accept="application/pdf" required>
+        <p class="hint">최대 100MB</p>
+
+        <label for="title">제목 *</label>
+        <input type="text" id="title" th:field="*{title}" required autocomplete="off">
+        <p class="error-text" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></p>
+
+        <label for="authors">저자</label>
+        <input type="text" id="authors" th:field="*{authors}"
+               placeholder="Kim, Lee, Park" autocomplete="off">
+
+        <label for="tags">태그</label>
+        <input type="text" id="tags" th:field="*{tags}"
+               placeholder="딥러닝, 세그멘테이션 (쉼표 구분)" autocomplete="off">
+
+        <label for="memo">메모</label>
+        <textarea id="memo" th:field="*{memo}" rows="3"
+                  placeholder="랩 내부 코멘트"></textarea>
+
+        <div class="form-actions">
+            <a class="btn ghost" th:href="@{/papers}">취소</a>
+            <button type="submit" class="btn primary">등록</button>
+        </div>
+    </form>
+
+    <script>
+        // 파일을 고르면 파일명을 제목에 자동으로 채운다 (제목이 비어 있을 때만)
+        document.getElementById('file').addEventListener('change', function (e) {
+            const titleInput = document.getElementById('title');
+            if (titleInput.value.trim() !== '') return;
+            const name = e.target.files[0]?.name ?? '';
+            titleInput.value = name.replace(/\.pdf$/i, '').replace(/[_]+/g, ' ').trim();
+        });
+
+        // 텍스트 입력창에서 엔터를 눌러도 제출되지 않게 한다
+        document.getElementById('uploadForm').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+                e.preventDefault();
+            }
+        });
+    </script>
+
+</main>
+</body>
+</html>

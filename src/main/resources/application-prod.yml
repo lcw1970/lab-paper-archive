@@ -16,7 +16,7 @@ server:
   servlet:
     session:
       cookie:
-        secure: false        # Tailscale HTTPS 붙인 뒤 true 로 변경
+        secure: true         # Tailscale Serve의 HTTPS를 통해서만 운영
 
 logging:
   level:

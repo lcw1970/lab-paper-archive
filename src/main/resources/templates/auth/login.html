@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head><title>로그인</title></head>
+<body>
+<main layout:fragment="content" class="center-box">
+    <div class="card">
+        <h1>논문 아카이브</h1>
+        <p class="sub">랩 구성원 전용</p>
+
+        <div class="alert error" th:if="${param.error != null}">
+            <span th:if="${param.error[0] == 'pending'}">관리자 승인 대기 중인 계정입니다.</span>
+            <span th:if="${param.error[0] == 'suspended'}">정지된 계정입니다. 관리자에게 문의하세요.</span>
+            <span th:if="${param.error[0] == 'bad'}">이메일 또는 비밀번호가 올바르지 않습니다.</span>
+        </div>
+        <div class="alert info" th:if="${param.logout != null}">로그아웃되었습니다.</div>
+
+        <form th:action="@{/login}" method="post">
+            <label>이메일
+                <input type="email" name="email" required autofocus autocomplete="username">
+            </label>
+            <label>비밀번호
+                <input type="password" name="password" required autocomplete="current-password">
+            </label>
+            <button type="submit" class="primary">로그인</button>
+        </form>
+
+        <p class="foot-link">
+            계정이 없나요? <a th:href="@{/signup}">가입 신청</a>
+        </p>
+    </div>
+</main>
+</body>
+</html>

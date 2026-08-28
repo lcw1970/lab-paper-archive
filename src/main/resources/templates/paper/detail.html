@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title th:text="${paper.title}">논문</title>
+</head>
+<body>
+<main layout:fragment="content" class="container narrow">
+
+    <div class="alert info" th:if="${message}" th:text="${message}"></div>
+
+    <a class="back" th:href="@{/papers}">← 목록</a>
+    <h1 th:text="${paper.title}">제목</h1>
+
+    <div class="tags" th:unless="${paper.tags.isEmpty()}">
+    <span class="tag" th:each="t : ${paper.tags}" th:text="${t.name}">태그</span>
+    </div>
+
+    <dl class="meta">
+        <dt>저자</dt>
+        <dd th:text="${paper.authors} ?: '-'">-</dd>
+        <dt>등록자</dt>
+        <dd th:text="${paper.uploader != null} ? ${paper.uploader.name} : '-'">-</dd>
+        <dt>등록일</dt>
+        <dd th:text="${#temporals.format(paper.createdAt, 'yyyy-MM-dd HH:mm')}">-</dd>
+    </dl>
+
+
+
+    <div th:if="${paper.memo}">
+        <h2>메모</h2>
+        <p class="body-text" th:text="${paper.memo}">메모</p>
+    </div>
+
+    <h2>파일</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>파일명</th>
+            <th>버전</th>
+            <th>크기</th>
+            <th>다운로드</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="f : ${paper.files}">
+            <td th:text="${f.originalName}">파일명</td>
+            <td th:text="'v' + ${f.version}">v1</td>
+            <td th:text="${#numbers.formatDecimal(f.fileSize / 1048576.0, 1, 2)} + ' MB'">0 MB</td>
+            <td class="nowrap">
+                <a class="btn small" th:href="@{/files/{id}(id=${f.id}, inline=true)}" target="_blank">보기</a>
+                <a class="btn small" th:href="@{/files/{id}(id=${f.id})}">다운로드</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="danger-zone">
+        <form th:action="@{/papers/{id}/delete(id=${paper.id})}" method="post"
+              onsubmit="return confirm('휴지통으로 이동합니다. 계속할까요?');">
+            <button type="submit" class="danger small">삭제</button>
+        </form>
+    </div>
+
+</main>
+</body>
+</html>

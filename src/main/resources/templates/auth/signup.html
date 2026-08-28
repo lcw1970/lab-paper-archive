@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head><title>가입 신청</title></head>
+<body>
+<main layout:fragment="content" class="center-box">
+    <div class="card">
+        <h1>가입 신청</h1>
+        <p class="sub">신청 후 관리자 승인이 있어야 로그인할 수 있습니다.</p>
+
+        <form th:action="@{/signup}" th:object="${form}" method="post">
+            <label>이메일
+                <input type="email" th:field="*{email}" required>
+                <small class="err" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></small>
+            </label>
+            <label>이름
+                <input type="text" th:field="*{name}" required>
+                <small class="err" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></small>
+            </label>
+            <label>비밀번호
+                <input type="password" th:field="*{password}" required>
+                <small class="err" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></small>
+            </label>
+            <label>비밀번호 확인
+                <input type="password" th:field="*{passwordConfirm}" required>
+                <small class="err" th:if="${#fields.hasErrors('passwordConfirm')}" th:errors="*{passwordConfirm}"></small>
+            </label>
+            <button type="submit" class="primary">신청하기</button>
+        </form>
+
+        <p class="foot-link"><a th:href="@{/login}">로그인으로 돌아가기</a></p>
+    </div>
+</main>
+</body>
+</html>

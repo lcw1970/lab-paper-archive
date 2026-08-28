@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/layout}">
+<head><title>홈</title></head>
+<body>
+<main layout:fragment="content" class="container">
+    <h1>환영합니다, <span sec:authentication="principal.name">이름</span>님</h1>
+    <p class="sub">논문 목록·업로드 기능은 다음 단계에서 추가됩니다.</p>
+</main>
+</body>
+</html>

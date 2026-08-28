@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head><title>접근 거부</title></head>
+<body>
+<main layout:fragment="content" class="center-box">
+    <div class="card">
+        <h1>접근 권한이 없습니다</h1>
+        <a class="primary btn" th:href="@{/}">홈으로</a>
+    </div>
+</main>
+</body>
+</html>
