@@ -76,7 +76,17 @@ public class PaperController {
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
         model.addAttribute("paper", paperQueryService.findDetail(id));
+        model.addAttribute("folders", folderService.findAll());
         return "paper/detail";
+    }
+
+    @PostMapping("/{id}/folder")
+    public String moveFolder(@PathVariable Long id,
+                             @RequestParam(required = false) Long folderId,
+                             RedirectAttributes ra) {
+        paperService.moveToFolder(id, folderId);
+        ra.addFlashAttribute("message", "논문 폴더를 변경했습니다.");
+        return "redirect:/papers/" + id;
     }
 
     @PostMapping("/{id}/delete")
@@ -94,10 +104,26 @@ public class PaperController {
         return "redirect:/papers";
     }
 
+    @PostMapping("/bulk-move")
+    public String bulkMove(@RequestParam(name = "ids", required = false) java.util.List<Long> ids,
+                           @RequestParam(required = false) Long folderId,
+                           RedirectAttributes ra) {
+        int count = paperService.moveAllToFolder(ids == null ? java.util.List.of() : ids, folderId);
+        ra.addFlashAttribute("message", count + "편의 폴더를 변경했습니다.");
+        return "redirect:/papers";
+    }
+
     @PostMapping("/folders")
     public String createFolder(@RequestParam String name, RedirectAttributes ra) {
         folderService.create(name);
         ra.addFlashAttribute("message", "폴더를 만들었습니다.");
+        return "redirect:/papers";
+    }
+
+    @PostMapping("/folders/{id}/delete")
+    public String deleteFolder(@PathVariable Long id, RedirectAttributes ra) {
+        folderService.delete(id);
+        ra.addFlashAttribute("message", "폴더를 삭제했습니다. 안의 논문은 미분류로 이동했습니다.");
         return "redirect:/papers";
     }
 }

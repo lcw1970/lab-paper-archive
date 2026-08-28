@@ -13,6 +13,7 @@ import java.util.List;
 public class FolderService {
 
     private final FolderRepository folderRepository;
+    private final PaperRepository paperRepository;
 
     @Transactional(readOnly = true)
     public List<Folder> findAll() {
@@ -38,5 +39,12 @@ public class FolderService {
             throw new BusinessException("같은 이름의 폴더가 이미 있습니다.");
         }
         folderRepository.save(Folder.of(name));
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        Folder folder = findById(id);
+        paperRepository.clearFolder(id);
+        folderRepository.delete(folder);
     }
 }

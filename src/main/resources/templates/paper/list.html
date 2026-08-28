@@ -18,18 +18,6 @@
 
     <section class="folder-browser" th:if="${browseMode}">
         <p class="folder-intro">폴더를 열어 그 안의 논문을 확인하세요.</p>
-        <div class="folder-grid">
-            <a class="folder-card" th:each="f : ${folders}" th:href="@{/papers(folder=${f.id})}">
-                <span class="folder-mark">▰</span>
-                <span class="folder-card-name" th:text="${f.name}">폴더 이름</span>
-                <span class="folder-open">열기 →</span>
-            </a>
-            <a class="folder-card muted" th:href="@{/papers(uncategorized=true)}">
-                <span class="folder-mark">▱</span>
-                <span class="folder-card-name">미분류</span>
-                <span class="folder-open">열기 →</span>
-            </a>
-        </div>
 
         <form class="folder-create" th:action="@{/papers/folders}" method="post">
             <label for="folderName">새 폴더</label>
@@ -37,6 +25,23 @@
                    placeholder="예: 지압강도 관련" autocomplete="off">
             <button type="submit" class="btn">폴더 만들기</button>
         </form>
+
+        <div class="folder-grid">
+            <div class="folder-item" th:each="f : ${folders}">
+                <a class="folder-card" th:href="@{/papers(folder=${f.id})}">
+                    <span class="folder-mark" aria-hidden="true">▰</span>
+                    <span class="folder-card-name" th:text="${f.name}">폴더 이름</span>
+                </a>
+                <form th:action="@{/papers/folders/{id}/delete(id=${f.id})}" method="post"
+                      onsubmit="return confirm('폴더를 삭제할까요? 안의 논문은 미분류로 이동합니다.');">
+                    <button class="folder-delete" type="submit" aria-label="폴더 삭제">×</button>
+                </form>
+            </div>
+            <a class="folder-card uncategorized" th:href="@{/papers(uncategorized=true)}">
+                <span class="folder-mark">▱</span>
+                <span class="folder-card-name">미분류</span>
+            </a>
+        </div>
     </section>
 
     <a class="back" th:if="${!browseMode}" th:href="@{/papers}">← 폴더 목록</a>
@@ -68,23 +73,21 @@
         <span th:if="${q != null}" th:text="'· 검색어: ' + ${q}"></span>
     </p>
 
-    <form class="folder-create" th:action="@{/papers/folders}" method="post" th:if="${!browseMode}">
-        <label for="folderName">새 폴더</label>
-        <input id="folderName" name="name" maxlength="100" required
-               placeholder="예: 2026 논문 세미나" autocomplete="off">
-        <button type="submit" class="btn">폴더 만들기</button>
-    </form>
-
     <form th:if="${!browseMode}" th:action="@{/papers/bulk-download}" method="post" id="bulkForm">
         <div class="bulk-bar">
-            <button type="submit" class="btn bulk-action" disabled data-action="download">
-                선택 다운로드 (<span id="cnt">0</span>)
-            </button>
-            <button type="submit" class="danger bulk-action" disabled data-action="delete"
-                    formaction="/papers/bulk-delete">
-                선택 삭제
-            </button>
-            <span class="hint">최대 50편 · 다운로드 기록이 남습니다</span>
+            <span class="selection-count">선택 <strong id="cnt">0</strong>편</span>
+            <select id="bulkAction" aria-label="선택 작업">
+                <option value="">선택 작업</option>
+                <option value="download">다운로드</option>
+                <option value="move">폴더 이동</option>
+                <option value="delete">삭제</option>
+            </select>
+            <select id="targetFolder" name="folderId" aria-label="이동할 폴더" hidden>
+                <option value="">미분류</option>
+                <option th:each="f : ${folders}" th:value="${f.id}" th:text="${f.name}">폴더</option>
+            </select>
+            <button type="submit" class="btn bulk-action" disabled>실행</button>
+            <span class="hint" id="bulkHint">작업을 선택하세요</span>
         </div>
 
         <table>
@@ -129,13 +132,16 @@
     <script>
         const rows = document.querySelectorAll('.row-chk');
         const all  = document.getElementById('checkAll');
-        const buttons = document.querySelectorAll('.bulk-action');
+        const runButton = document.querySelector('.bulk-action');
         const cnt  = document.getElementById('cnt');
+        const actionSelect = document.getElementById('bulkAction');
+        const targetFolder = document.getElementById('targetFolder');
+        const bulkHint = document.getElementById('bulkHint');
 
         function refresh() {
             const n = document.querySelectorAll('.row-chk:checked').length;
             if (cnt) cnt.textContent = n;
-            buttons.forEach(function (button) { button.disabled = (n === 0); });
+            if (runButton) runButton.disabled = (n === 0 || !actionSelect || !actionSelect.value);
             if (all) all.checked = (n > 0 && n === rows.length);
         }
 
@@ -147,17 +153,34 @@
         }
         rows.forEach(function (c) { c.addEventListener('change', refresh); });
 
+        const actions = {
+            download: { url: '/papers/bulk-download', hint: '최대 50편 · 다운로드 기록이 남습니다' },
+            move: { url: '/papers/bulk-move', hint: '선택한 논문을 지정 폴더로 이동합니다' },
+            delete: { url: '/papers/bulk-delete', hint: '선택한 논문을 휴지통으로 이동합니다' }
+        };
+
+        if (actionSelect) actionSelect.addEventListener('change', function () {
+            const selected = actions[actionSelect.value];
+            bulkForm.action = selected ? selected.url : '/papers/bulk-download';
+            targetFolder.hidden = actionSelect.value !== 'move';
+            bulkHint.textContent = selected ? selected.hint : '작업을 선택하세요';
+            refresh();
+        });
+
         const bulkForm = document.getElementById('bulkForm');
         if (bulkForm) bulkForm.addEventListener('submit', function (e) {
             const n = document.querySelectorAll('.row-chk:checked').length;
             if (n === 0) { e.preventDefault(); return; }
-            const action = e.submitter?.dataset.action;
+            const action = actionSelect.value;
+            if (!action) { e.preventDefault(); return; }
             if (action === 'download' && n > 50) {
                 e.preventDefault(); alert('한 번에 최대 50편까지 받을 수 있습니다.'); return;
             }
             const message = action === 'delete'
                 ? n + '편을 휴지통으로 이동합니다. 계속할까요?'
-                : n + '편을 다운로드합니다. 다운로드 기록이 남습니다.';
+                : action === 'move'
+                    ? n + '편을 선택한 폴더로 이동합니다. 계속할까요?'
+                    : n + '편을 다운로드합니다. 다운로드 기록이 남습니다.';
             if (!confirm(message)) { e.preventDefault(); }
         });
 

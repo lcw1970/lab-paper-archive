@@ -3,6 +3,7 @@ package com.lab.paperarchive.paper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -18,6 +19,10 @@ public interface PaperRepository extends JpaRepository<Paper, Long> {
     long countByDeletedAtIsNull();
 
     List<Paper> findAllByIdInAndDeletedAtIsNull(List<Long> ids);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update Paper p set p.folder = null where p.folder.id = :folderId")
+    void clearFolder(@Param("folderId") Long folderId);
 
     @Query("""
            select p from Paper p

@@ -80,6 +80,34 @@ public class PaperService {
     }
 
     @Transactional
+    public void moveToFolder(Long paperId, Long folderId) {
+        Paper paper = paperRepository.findByIdAndDeletedAtIsNull(paperId)
+                .orElseThrow(() -> new BusinessException("논문을 찾을 수 없습니다."));
+
+        Folder folder = folderId == null ? null : folderRepository.findById(folderId)
+                .orElseThrow(() -> new BusinessException("선택한 폴더를 찾을 수 없습니다."));
+        paper.assignFolder(folder);
+    }
+
+    @Transactional
+    public int moveAllToFolder(Iterable<Long> ids, Long folderId) {
+        java.util.List<Long> requestedIds = new java.util.ArrayList<>();
+        ids.forEach(requestedIds::add);
+        if (requestedIds.isEmpty()) {
+            throw new BusinessException("선택된 논문이 없습니다.");
+        }
+
+        Folder folder = folderId == null ? null : folderRepository.findById(folderId)
+                .orElseThrow(() -> new BusinessException("선택한 폴더를 찾을 수 없습니다."));
+        java.util.List<Paper> papers = paperRepository.findAllByIdInAndDeletedAtIsNull(requestedIds);
+        if (papers.isEmpty()) {
+            throw new BusinessException("이동할 논문을 찾을 수 없습니다.");
+        }
+        papers.forEach(paper -> paper.assignFolder(folder));
+        return papers.size();
+    }
+
+    @Transactional
     public int softDeleteAll(Iterable<Long> ids) {
         java.util.List<Long> requestedIds = new java.util.ArrayList<>();
         ids.forEach(requestedIds::add);

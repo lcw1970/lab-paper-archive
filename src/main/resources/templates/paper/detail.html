@@ -28,6 +28,18 @@
         <dd th:text="${#temporals.format(paper.createdAt, 'yyyy-MM-dd HH:mm')}">-</dd>
     </dl>
 
+    <form class="folder-move" th:action="@{/papers/{id}/folder(id=${paper.id})}" method="post">
+        <label for="folderId">폴더 이동</label>
+        <div class="folder-move-controls">
+            <select id="folderId" name="folderId">
+                <option value="">미분류</option>
+                <option th:each="f : ${folders}" th:value="${f.id}" th:text="${f.name}"
+                        th:selected="${paper.folder != null and paper.folder.id == f.id}">폴더</option>
+            </select>
+            <button type="submit" class="btn small">이동</button>
+        </div>
+    </form>
+
 
 
     <div th:if="${paper.memo}">
