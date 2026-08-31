@@ -2,6 +2,7 @@ package com.lab.paperarchive.paper;
 
 import com.lab.paperarchive.common.exception.BusinessException;
 import com.lab.paperarchive.paper.dto.FolderSummary;
+import com.lab.paperarchive.storage.ReadablePaperStorage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ public class FolderService {
 
     private final FolderRepository folderRepository;
     private final PaperRepository paperRepository;
+    private final ReadablePaperStorage readablePaperStorage;
 
     @Transactional(readOnly = true)
     public List<Folder> findAll() {
@@ -62,7 +64,11 @@ public class FolderService {
     @Transactional
     public void delete(Long id) {
         Folder folder = findById(id);
-        paperRepository.clearFolder(id);
+        List<Paper> papers = paperRepository.findAllActiveWithFilesAndFolderByFolderId(id);
+        papers.forEach(paper -> {
+            paper.assignFolder(null);
+            readablePaperStorage.synchronize(paper);
+        });
         folderRepository.delete(folder);
     }
 }

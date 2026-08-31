@@ -5,6 +5,7 @@ import com.lab.paperarchive.paper.dto.PaperUploadRequest;
 import com.lab.paperarchive.paper.dto.PaperUpdateRequest;
 import com.lab.paperarchive.storage.StorageService;
 import com.lab.paperarchive.storage.StoredFile;
+import com.lab.paperarchive.storage.ReadablePaperStorage;
 import com.lab.paperarchive.user.User;
 import com.lab.paperarchive.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class PaperService {
     private final FolderRepository folderRepository;
     private final UserRepository userRepository;
     private final StorageService storageService;
+    private final ReadablePaperStorage readablePaperStorage;
 
     @Transactional
     public Long upload(PaperUploadRequest request, Long uploaderId) {
@@ -69,6 +71,7 @@ public class PaperService {
         attachTags(paper, request.getTags());
 
         Long id = paperRepository.save(paper).getId();
+        readablePaperStorage.synchronize(paper);
         log.info("논문 등록: id={}, title={}, uploader={}", id, paper.getTitle(), uploader.getEmail());
         return id;
     }
@@ -78,6 +81,7 @@ public class PaperService {
         Paper paper = paperRepository.findByIdAndDeletedAtIsNull(paperId)
                 .orElseThrow(() -> new BusinessException("논문을 찾을 수 없습니다."));
         paper.softDelete();
+        readablePaperStorage.synchronize(paper);
         // 실제 파일은 즉시 지우지 않는다. 휴지통 배치가 30일 후 정리한다.
     }
 
@@ -89,6 +93,7 @@ public class PaperService {
             throw new BusinessException("휴지통에 있는 논문만 복원할 수 있습니다.");
         }
         paper.restore();
+        readablePaperStorage.synchronize(paper);
     }
 
     @Transactional
@@ -98,7 +103,10 @@ public class PaperService {
         if (papers.isEmpty()) {
             throw new BusinessException("복원할 논문을 찾을 수 없습니다.");
         }
-        papers.forEach(Paper::restore);
+        papers.forEach(paper -> {
+            paper.restore();
+            readablePaperStorage.synchronize(paper);
+        });
         return papers.size();
     }
 
@@ -111,6 +119,7 @@ public class PaperService {
         Paper paper = paperRepository.findDeletedWithFilesById(paperId)
                 .orElseThrow(() -> new BusinessException("휴지통에 있는 논문만 영구 삭제할 수 있습니다."));
         deleteFiles(paper);
+        readablePaperStorage.removeCopies(paper.getId());
         paperRepository.delete(paper);
     }
 
@@ -121,7 +130,10 @@ public class PaperService {
         if (papers.isEmpty()) {
             throw new BusinessException("영구 삭제할 논문을 찾을 수 없습니다.");
         }
-        papers.forEach(this::deleteFiles);
+        papers.forEach(paper -> {
+            deleteFiles(paper);
+            readablePaperStorage.removeCopies(paper.getId());
+        });
         paperRepository.deleteAll(papers);
         return papers.size();
     }
@@ -142,6 +154,7 @@ public class PaperService {
         );
         paper.clearTags();
         attachTags(paper, request.getTags());
+        readablePaperStorage.synchronize(paper);
     }
 
     @Transactional
@@ -152,6 +165,7 @@ public class PaperService {
         Folder folder = folderId == null ? null : folderRepository.findById(folderId)
                 .orElseThrow(() -> new BusinessException("선택한 폴더를 찾을 수 없습니다."));
         paper.assignFolder(folder);
+        readablePaperStorage.synchronize(paper);
     }
 
     @Transactional
@@ -164,7 +178,10 @@ public class PaperService {
         if (papers.isEmpty()) {
             throw new BusinessException("이동할 논문을 찾을 수 없습니다.");
         }
-        papers.forEach(paper -> paper.assignFolder(folder));
+        papers.forEach(paper -> {
+            paper.assignFolder(folder);
+            readablePaperStorage.synchronize(paper);
+        });
         return papers.size();
     }
 
@@ -176,7 +193,10 @@ public class PaperService {
         if (papers.isEmpty()) {
             throw new BusinessException("삭제할 논문을 찾을 수 없습니다.");
         }
-        papers.forEach(Paper::softDelete);
+        papers.forEach(paper -> {
+            paper.softDelete();
+            readablePaperStorage.synchronize(paper);
+        });
         return papers.size();
     }
 
