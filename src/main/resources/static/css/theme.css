@@ -16,7 +16,8 @@ body { letter-spacing: -.025em; }
     background: #fff;
 }
 
-.brand { color: var(--accent); font-size: 20px; font-weight: 900; letter-spacing: -.045em; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--accent); font-size: 20px; font-weight: 900; letter-spacing: -.045em; }
+.brand-icon { width: 30px; height: 30px; flex: 0 0 auto; }
 .topbar nav a:hover { color: var(--accent); text-decoration: none; }
 
 .container { width: min(1120px, 100%); padding-top: 64px; }

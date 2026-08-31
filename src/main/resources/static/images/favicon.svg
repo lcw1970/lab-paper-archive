@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">TCTE paper database</title>
+  <rect width="64" height="64" rx="14" fill="#03c75a"/>
+  <path d="M17 11h21l10 10v30H17z" fill="#fff"/>
+  <path d="M38 11v11h10" fill="#c9f4dc"/>
+  <path d="M15 34h15l4-5h15v22H15z" fill="#ffd75e" stroke="#d59b00" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M15 35h34" stroke="#d59b00" stroke-width="2"/>
+</svg>
