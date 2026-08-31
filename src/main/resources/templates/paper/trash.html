@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>휴지통</title>
+</head>
+<body>
+<main layout:fragment="content" class="container">
+
+    <div class="list-header">
+        <div>
+            <a class="back" th:href="@{/papers}">← 폴더 목록</a>
+            <h1>휴지통</h1>
+        </div>
+    </div>
+
+    <div class="alert info" th:if="${message}" th:text="${message}"></div>
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+
+    <p class="sub">삭제한 논문은 여기서 복원할 수 있습니다. 영구 삭제하면 논문 정보와 PDF 파일을 되돌릴 수 없게 됩니다.</p>
+
+    <form th:action="@{/papers/bulk-restore}" method="post" id="trashBulkForm">
+        <div class="bulk-bar" th:if="${!papers.isEmpty()}">
+            <span class="selection-count">선택 <strong id="cnt">0</strong>편</span>
+            <select id="bulkAction" aria-label="선택 작업">
+                <option value="">선택 작업</option>
+                <option value="restore">복원</option>
+                <option value="permanent-delete">영구 삭제</option>
+            </select>
+            <button type="submit" class="btn bulk-action" disabled>실행</button>
+            <span class="hint" id="bulkHint">작업을 선택하세요</span>
+        </div>
+    </form>
+
+    <table>
+        <thead>
+        <tr>
+            <th class="chk"><input type="checkbox" id="checkAll" aria-label="전체 선택"></th>
+            <th>제목</th>
+            <th>폴더</th>
+            <th>삭제일</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${papers.content}">
+            <td class="chk"><input type="checkbox" name="ids" th:value="${p.id}" class="row-chk"
+                                 form="trashBulkForm" aria-label="논문 선택"></td>
+            <td th:text="${p.title}">논문 제목</td>
+            <td th:text="${p.folderName}">미분류</td>
+            <td th:text="${#temporals.format(p.deletedAt, 'yyyy-MM-dd HH:mm')}">-</td>
+            <td>
+                <form th:action="@{/papers/{id}/restore(id=${p.id})}" method="post" class="inline">
+                    <button type="submit" class="small">복원</button>
+                </form>
+                <form th:action="@{/papers/{id}/permanent-delete(id=${p.id})}" method="post" class="inline"
+                      onsubmit="return confirm('이 논문과 PDF 파일을 영구 삭제합니다. 되돌릴 수 없습니다. 계속할까요?');">
+                    <button type="submit" class="small danger">영구 삭제</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${papers.isEmpty()}">
+            <td colspan="5" class="empty">휴지통이 비어 있습니다.</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <nav class="pagination" th:if="${papers.totalPages > 1}">
+        <a th:if="${!papers.first}" th:href="@{/papers/trash(page=${papers.number - 1})}">← 이전</a>
+        <span th:text="${papers.number + 1} + ' / ' + ${papers.totalPages}"></span>
+        <a th:if="${!papers.last}" th:href="@{/papers/trash(page=${papers.number + 1})}">다음 →</a>
+    </nav>
+
+    <script>
+        const bulkForm = document.getElementById('trashBulkForm');
+        const rows = document.querySelectorAll('.row-chk');
+        const all = document.getElementById('checkAll');
+        const count = document.getElementById('cnt');
+        const actionSelect = document.getElementById('bulkAction');
+        const runButton = document.querySelector('.bulk-action');
+        const hint = document.getElementById('bulkHint');
+
+        function refresh() {
+            const selected = document.querySelectorAll('.row-chk:checked').length;
+            if (count) count.textContent = selected;
+            if (runButton) runButton.disabled = selected === 0 || !actionSelect || !actionSelect.value;
+            if (all) all.checked = selected > 0 && selected === rows.length;
+        }
+
+        if (all) all.addEventListener('change', function () {
+            rows.forEach(function (row) { row.checked = all.checked; });
+            refresh();
+        });
+        rows.forEach(function (row) { row.addEventListener('change', refresh); });
+
+        const actions = {
+            restore: { url: '/papers/bulk-restore', hint: '선택한 논문을 목록으로 복원합니다.' },
+            'permanent-delete': { url: '/papers/bulk-permanent-delete', hint: '논문 정보와 PDF 파일을 되돌릴 수 없게 삭제합니다.' }
+        };
+        if (actionSelect) actionSelect.addEventListener('change', function () {
+            const action = actions[actionSelect.value];
+            bulkForm.action = action ? action.url : '/papers/bulk-restore';
+            hint.textContent = action ? action.hint : '작업을 선택하세요';
+            refresh();
+        });
+        if (bulkForm) bulkForm.addEventListener('submit', function (event) {
+            const selected = document.querySelectorAll('.row-chk:checked').length;
+            const action = actionSelect ? actionSelect.value : '';
+            if (selected === 0 || !action) { event.preventDefault(); return; }
+            const message = action === 'permanent-delete'
+                ? selected + '편과 연결된 PDF 파일을 영구 삭제합니다. 되돌릴 수 없습니다. 계속할까요?'
+                : selected + '편을 목록으로 복원합니다. 계속할까요?';
+            if (!confirm(message)) event.preventDefault();
+        });
+        refresh();
+    </script>
+
+</main>
+</body>
+</html>

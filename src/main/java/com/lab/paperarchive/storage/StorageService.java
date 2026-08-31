@@ -15,5 +15,8 @@ public interface StorageService {
 
     void moveToTrash(String relativePath);
 
+    /** 휴지통 보관 없이 실제 저장 파일을 삭제한다. */
+    void deletePermanently(String relativePath);
+
     boolean exists(String relativePath);
 }

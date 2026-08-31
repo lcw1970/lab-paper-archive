@@ -10,7 +10,8 @@ public record PaperListItem(
         String authors,
         String folderName,
         String uploaderName,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime deletedAt
 ) {
     public static PaperListItem from(Paper p) {
         return new PaperListItem(
@@ -19,7 +20,8 @@ public record PaperListItem(
                 p.getAuthors(),
                 p.getFolder() != null ? p.getFolder().getName() : "미분류",
                 p.getUploader() != null ? p.getUploader().getName() : "-",
-                p.getCreatedAt()
+                p.getCreatedAt(),
+                p.getDeletedAt()
         );
     }
 }

@@ -19,7 +19,7 @@
     isolation: isolate;
     width: min(360px, 100%);
     height: 38px;
-    padding: 13px 34px 0 48px;
+    padding: 13px 76px 0 48px;
 }
 
 .folder-card::before {
@@ -40,6 +40,23 @@
 .folder-card-name {
     margin: 0;
     font-size: 14px;
+}
+
+.folder-count {
+    position: absolute;
+    top: 12px;
+    right: 34px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.folder-card:hover .folder-count {
+    color: inherit;
+}
+
+.folder-card.uncategorized .folder-count {
+    right: 12px;
 }
 
 .folder-delete {

@@ -111,6 +111,17 @@ public class LocalFileStorage implements StorageService {
     }
 
     @Override
+    public void deletePermanently(String relativePath) {
+        Path path = resolveSafely(relativePath);
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            log.warn("저장 파일 영구 삭제 실패: {}", relativePath, e);
+            throw new BusinessException("PDF 파일을 영구 삭제하지 못했습니다.");
+        }
+    }
+
+    @Override
     public boolean exists(String relativePath) {
         return Files.exists(resolveSafely(relativePath));
     }

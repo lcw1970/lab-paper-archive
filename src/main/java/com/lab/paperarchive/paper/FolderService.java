@@ -1,6 +1,7 @@
 package com.lab.paperarchive.paper;
 
 import com.lab.paperarchive.common.exception.BusinessException;
+import com.lab.paperarchive.paper.dto.FolderSummary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,23 @@ public class FolderService {
     @Transactional(readOnly = true)
     public List<Folder> findAll() {
         return folderRepository.findAllByOrderByNameAsc();
+    }
+
+    /** 폴더 탐색 화면용. 삭제되지 않은 논문만 센다. */
+    @Transactional(readOnly = true)
+    public List<FolderSummary> findAllWithPaperCount() {
+        return findAll().stream()
+                .map(folder -> new FolderSummary(
+                        folder.getId(),
+                        folder.getName(),
+                        paperRepository.countByFolderIdAndDeletedAtIsNull(folder.getId())
+                ))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public long countUncategorized() {
+        return paperRepository.countByFolderIsNullAndDeletedAtIsNull();
     }
 
     @Transactional(readOnly = true)

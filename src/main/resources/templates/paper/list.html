@@ -27,12 +27,13 @@
         </form>
 
         <div class="folder-grid">
-            <div class="folder-item" th:each="f : ${folders}">
-                <a class="folder-card" th:href="@{/papers(folder=${f.id})}">
+            <div class="folder-item" th:each="summary : ${folderSummaries}">
+                <a class="folder-card" th:href="@{/papers(folder=${summary.id})}">
                     <span class="folder-mark" aria-hidden="true">▰</span>
-                    <span class="folder-card-name" th:text="${f.name}">폴더 이름</span>
+                    <span class="folder-card-name" th:text="${summary.name}">폴더 이름</span>
+                    <span class="folder-count" th:text="${summary.paperCount} + '편'">0편</span>
                 </a>
-                <form th:action="@{/papers/folders/{id}/delete(id=${f.id})}" method="post"
+                <form th:action="@{/papers/folders/{id}/delete(id=${summary.id})}" method="post"
                       onsubmit="return confirm('폴더를 삭제할까요? 안의 논문은 미분류로 이동합니다.');">
                     <button class="folder-delete" type="submit" aria-label="폴더 삭제">×</button>
                 </form>
@@ -40,6 +41,7 @@
             <a class="folder-card uncategorized" th:href="@{/papers(uncategorized=true)}">
                 <span class="folder-mark">▱</span>
                 <span class="folder-card-name">미분류</span>
+                <span class="folder-count" th:text="${uncategorizedCount} + '편'">0편</span>
             </a>
         </div>
     </section>

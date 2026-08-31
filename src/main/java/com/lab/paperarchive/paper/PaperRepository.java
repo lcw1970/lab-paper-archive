@@ -16,9 +16,31 @@ public interface PaperRepository extends JpaRepository<Paper, Long> {
 
     Page<Paper> findByDeletedAtIsNull(Pageable pageable);
 
+    Page<Paper> findByDeletedAtIsNotNull(Pageable pageable);
+
     long countByDeletedAtIsNull();
 
+    long countByFolderIdAndDeletedAtIsNull(Long folderId);
+
+    long countByFolderIsNullAndDeletedAtIsNull();
+
     List<Paper> findAllByIdInAndDeletedAtIsNull(List<Long> ids);
+
+    List<Paper> findAllByIdInAndDeletedAtIsNotNull(List<Long> ids);
+
+    @Query("""
+           select distinct p from Paper p
+           left join fetch p.files
+           where p.id = :id and p.deletedAt is not null
+           """)
+    Optional<Paper> findDeletedWithFilesById(@Param("id") Long id);
+
+    @Query("""
+           select distinct p from Paper p
+           left join fetch p.files
+           where p.id in :ids and p.deletedAt is not null
+           """)
+    List<Paper> findAllDeletedWithFilesByIdIn(@Param("ids") List<Long> ids);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update Paper p set p.folder = null where p.folder.id = :folderId")

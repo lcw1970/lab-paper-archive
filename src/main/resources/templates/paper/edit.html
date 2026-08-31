@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>논문 정보 수정</title>
+</head>
+<body>
+<main layout:fragment="content" class="container narrow">
+
+    <a class="back" th:href="@{/papers/{id}(id=${paperId})}">← 논문 상세</a>
+    <h1>논문 정보 수정</h1>
+
+    <form th:action="@{/papers/{id}/edit(id=${paperId})}" method="post" th:object="${form}">
+        <label for="title">제목 *</label>
+        <input type="text" id="title" th:field="*{title}" required autocomplete="off">
+        <p class="error-text" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></p>
+
+        <label for="authors">저자</label>
+        <input type="text" id="authors" th:field="*{authors}"
+               placeholder="Kim, Lee, Park" autocomplete="off">
+        <p class="error-text" th:if="${#fields.hasErrors('authors')}" th:errors="*{authors}"></p>
+
+        <label for="tags">태그</label>
+        <input type="text" id="tags" th:field="*{tags}"
+               placeholder="지압강도, 목재 (쉼표 구분)" autocomplete="off">
+        <p class="error-text" th:if="${#fields.hasErrors('tags')}" th:errors="*{tags}"></p>
+
+        <label for="memo">메모</label>
+        <textarea id="memo" th:field="*{memo}" rows="5"
+                  placeholder="랩 내부 코멘트"></textarea>
+
+        <p class="hint">PDF 파일과 폴더는 수정되지 않습니다. 폴더는 상세 화면의 ‘폴더 이동’에서 바꿀 수 있습니다.</p>
+
+        <div class="form-actions">
+            <a class="btn ghost" th:href="@{/papers/{id}(id=${paperId})}">취소</a>
+            <button type="submit" class="btn primary">저장</button>
+        </div>
+    </form>
+
+</main>
+</body>
+</html>

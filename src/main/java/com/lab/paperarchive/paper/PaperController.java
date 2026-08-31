@@ -1,6 +1,7 @@
 package com.lab.paperarchive.paper;
 
 import com.lab.paperarchive.paper.dto.PaperUploadRequest;
+import com.lab.paperarchive.paper.dto.PaperUpdateRequest;
 import com.lab.paperarchive.user.LabUserDetails;
 
 
@@ -46,7 +47,16 @@ public class PaperController {
         model.addAttribute("selectedFolderName", folder == null ? null : folderService.findById(folder).getName());
         model.addAttribute("tags", tagRepository.findAll());
         model.addAttribute("folders", folderService.findAll());
+        model.addAttribute("folderSummaries", folderService.findAllWithPaperCount());
+        model.addAttribute("uncategorizedCount", folderService.countUncategorized());
         return "paper/list";
+    }
+
+    @GetMapping("/trash")
+    public String trash(@PageableDefault(size = 20, sort = "deletedAt",
+            direction = Sort.Direction.DESC) Pageable pageable, Model model) {
+        model.addAttribute("papers", paperQueryService.findDeleted(pageable));
+        return "paper/trash";
     }
 
     @GetMapping("/upload")
@@ -80,6 +90,30 @@ public class PaperController {
         return "paper/detail";
     }
 
+    @GetMapping("/{id}/edit")
+    public String editForm(@PathVariable Long id, Model model) {
+        model.addAttribute("paperId", id);
+        if (!model.containsAttribute("form")) {
+            model.addAttribute("form", PaperUpdateRequest.from(paperQueryService.findDetail(id)));
+        }
+        return "paper/edit";
+    }
+
+    @PostMapping("/{id}/edit")
+    public String edit(@PathVariable Long id,
+                       @Valid @ModelAttribute("form") PaperUpdateRequest form,
+                       BindingResult bindingResult,
+                       Model model,
+                       RedirectAttributes ra) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("paperId", id);
+            return "paper/edit";
+        }
+        paperService.updateMetadata(id, form);
+        ra.addFlashAttribute("message", "논문 정보를 수정했습니다.");
+        return "redirect:/papers/" + id;
+    }
+
     @PostMapping("/{id}/folder")
     public String moveFolder(@PathVariable Long id,
                              @RequestParam(required = false) Long folderId,
@@ -96,12 +130,42 @@ public class PaperController {
         return "redirect:/papers";
     }
 
+    @PostMapping("/{id}/restore")
+    public String restore(@PathVariable Long id, RedirectAttributes ra) {
+        paperService.restore(id);
+        ra.addFlashAttribute("message", "논문을 복원했습니다.");
+        return "redirect:/papers/" + id;
+    }
+
+    @PostMapping("/{id}/permanent-delete")
+    public String deletePermanently(@PathVariable Long id, RedirectAttributes ra) {
+        paperService.deletePermanently(id);
+        ra.addFlashAttribute("message", "논문과 PDF 파일을 영구 삭제했습니다.");
+        return "redirect:/papers/trash";
+    }
+
     @PostMapping("/bulk-delete")
     public String bulkDelete(@RequestParam(name = "ids", required = false) java.util.List<Long> ids,
                              RedirectAttributes ra) {
         int count = paperService.softDeleteAll(ids == null ? java.util.List.of() : ids);
         ra.addFlashAttribute("message", count + "편을 휴지통으로 이동했습니다.");
         return "redirect:/papers";
+    }
+
+    @PostMapping("/bulk-restore")
+    public String bulkRestore(@RequestParam(name = "ids", required = false) java.util.List<Long> ids,
+                              RedirectAttributes ra) {
+        int count = paperService.restoreAll(ids == null ? java.util.List.of() : ids);
+        ra.addFlashAttribute("message", count + "편을 복원했습니다.");
+        return "redirect:/papers/trash";
+    }
+
+    @PostMapping("/bulk-permanent-delete")
+    public String bulkDeletePermanently(@RequestParam(name = "ids", required = false) java.util.List<Long> ids,
+                                         RedirectAttributes ra) {
+        int count = paperService.deleteAllPermanently(ids == null ? java.util.List.of() : ids);
+        ra.addFlashAttribute("message", count + "편과 연결된 PDF 파일을 영구 삭제했습니다.");
+        return "redirect:/papers/trash";
     }
 
     @PostMapping("/bulk-move")

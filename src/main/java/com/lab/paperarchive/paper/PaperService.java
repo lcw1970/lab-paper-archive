@@ -2,6 +2,7 @@ package com.lab.paperarchive.paper;
 
 import com.lab.paperarchive.common.exception.BusinessException;
 import com.lab.paperarchive.paper.dto.PaperUploadRequest;
+import com.lab.paperarchive.paper.dto.PaperUpdateRequest;
 import com.lab.paperarchive.storage.StorageService;
 import com.lab.paperarchive.storage.StoredFile;
 import com.lab.paperarchive.user.User;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -80,6 +82,69 @@ public class PaperService {
     }
 
     @Transactional
+    public void restore(Long paperId) {
+        Paper paper = paperRepository.findById(paperId)
+                .orElseThrow(() -> new BusinessException("논문을 찾을 수 없습니다."));
+        if (!paper.isDeleted()) {
+            throw new BusinessException("휴지통에 있는 논문만 복원할 수 있습니다.");
+        }
+        paper.restore();
+    }
+
+    @Transactional
+    public int restoreAll(Iterable<Long> ids) {
+        List<Long> requestedIds = requestedIds(ids);
+        List<Paper> papers = paperRepository.findAllByIdInAndDeletedAtIsNotNull(requestedIds);
+        if (papers.isEmpty()) {
+            throw new BusinessException("복원할 논문을 찾을 수 없습니다.");
+        }
+        papers.forEach(Paper::restore);
+        return papers.size();
+    }
+
+    /**
+     * 휴지통에 있는 논문과 연결된 PDF 파일을 함께 삭제한다.
+     * 삭제 대상이 휴지통에 있을 때만 실행해 실수로 공개 목록의 논문을 지우지 않도록 한다.
+     */
+    @Transactional
+    public void deletePermanently(Long paperId) {
+        Paper paper = paperRepository.findDeletedWithFilesById(paperId)
+                .orElseThrow(() -> new BusinessException("휴지통에 있는 논문만 영구 삭제할 수 있습니다."));
+        deleteFiles(paper);
+        paperRepository.delete(paper);
+    }
+
+    @Transactional
+    public int deleteAllPermanently(Iterable<Long> ids) {
+        List<Long> requestedIds = requestedIds(ids);
+        List<Paper> papers = paperRepository.findAllDeletedWithFilesByIdIn(requestedIds);
+        if (papers.isEmpty()) {
+            throw new BusinessException("영구 삭제할 논문을 찾을 수 없습니다.");
+        }
+        papers.forEach(this::deleteFiles);
+        paperRepository.deleteAll(papers);
+        return papers.size();
+    }
+
+    @Transactional
+    public void updateMetadata(Long paperId, PaperUpdateRequest request) {
+        Paper paper = paperRepository.findByIdAndDeletedAtIsNull(paperId)
+                .orElseThrow(() -> new BusinessException("논문을 찾을 수 없습니다."));
+
+        paper.updateMetadata(
+                request.getTitle().trim(),
+                trimOrNull(request.getAuthors()),
+                paper.getVenue(),
+                paper.getPubYear(),
+                paper.getDoi(),
+                paper.getAbstractText(),
+                trimOrNull(request.getMemo())
+        );
+        paper.clearTags();
+        attachTags(paper, request.getTags());
+    }
+
+    @Transactional
     public void moveToFolder(Long paperId, Long folderId) {
         Paper paper = paperRepository.findByIdAndDeletedAtIsNull(paperId)
                 .orElseThrow(() -> new BusinessException("논문을 찾을 수 없습니다."));
@@ -91,11 +156,7 @@ public class PaperService {
 
     @Transactional
     public int moveAllToFolder(Iterable<Long> ids, Long folderId) {
-        java.util.List<Long> requestedIds = new java.util.ArrayList<>();
-        ids.forEach(requestedIds::add);
-        if (requestedIds.isEmpty()) {
-            throw new BusinessException("선택된 논문이 없습니다.");
-        }
+        List<Long> requestedIds = requestedIds(ids);
 
         Folder folder = folderId == null ? null : folderRepository.findById(folderId)
                 .orElseThrow(() -> new BusinessException("선택한 폴더를 찾을 수 없습니다."));
@@ -109,11 +170,7 @@ public class PaperService {
 
     @Transactional
     public int softDeleteAll(Iterable<Long> ids) {
-        java.util.List<Long> requestedIds = new java.util.ArrayList<>();
-        ids.forEach(requestedIds::add);
-        if (requestedIds.isEmpty()) {
-            throw new BusinessException("선택된 논문이 없습니다.");
-        }
+        List<Long> requestedIds = requestedIds(ids);
 
         java.util.List<Paper> papers = paperRepository.findAllByIdInAndDeletedAtIsNull(requestedIds);
         if (papers.isEmpty()) {
@@ -121,6 +178,19 @@ public class PaperService {
         }
         papers.forEach(Paper::softDelete);
         return papers.size();
+    }
+
+    private List<Long> requestedIds(Iterable<Long> ids) {
+        List<Long> requestedIds = new java.util.ArrayList<>();
+        ids.forEach(requestedIds::add);
+        if (requestedIds.isEmpty()) {
+            throw new BusinessException("선택된 논문이 없습니다.");
+        }
+        return requestedIds;
+    }
+
+    private void deleteFiles(Paper paper) {
+        paper.getFiles().forEach(file -> storageService.deletePermanently(file.getStoredPath()));
     }
 
     private void attachTags(Paper paper, String rawTags) {

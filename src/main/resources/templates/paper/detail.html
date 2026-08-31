@@ -10,12 +10,14 @@
 
     <div class="alert info" th:if="${message}" th:text="${message}"></div>
 
-    <a class="back" th:href="@{/papers}">← 목록</a>
+    <a class="back" th:href="@{/papers}">← 폴더 목록</a>
     <h1 th:text="${paper.title}">제목</h1>
 
     <div class="tags" th:unless="${paper.tags.isEmpty()}">
     <span class="tag" th:each="t : ${paper.tags}" th:text="${t.name}">태그</span>
     </div>
+
+    <a class="btn small" th:href="@{/papers/{id}/edit(id=${paper.id})}">정보 수정</a>
 
     <dl class="meta">
         <dt>폴더</dt>

@@ -16,6 +16,7 @@
     <a class="brand" th:href="@{/}" aria-label="TCTE 논문 데이터 베이스 홈">TCTE 논문 데이터 베이스</a>
     <nav>
         <a th:href="@{/papers}">논문 목록</a>
+        <a th:href="@{/papers/trash}">휴지통</a>
         <a th:href="@{/admin/users}" sec:authorize="hasRole('ADMIN')">회원 관리</a>
         <span class="me"><span sec:authentication="principal.name">이름</span> / LAB</span>
         <form th:action="@{/logout}" method="post" class="inline">

@@ -33,6 +33,12 @@ public class PaperQueryService {
     }
 
     @Transactional(readOnly = true)
+    public Page<PaperListItem> findDeleted(Pageable pageable) {
+        return paperRepository.findByDeletedAtIsNotNull(pageable)
+                .map(PaperListItem::from);
+    }
+
+    @Transactional(readOnly = true)
     public long countAll() {
         return paperRepository.countByDeletedAtIsNull();
     }
