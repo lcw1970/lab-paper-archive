@@ -1,5 +1,78 @@
-.folder-browser .folder-create {
-    margin: 0 0 26px;
+.list-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.list-actions .btn {
+    min-width: 140px;
+}
+
+.folder-search {
+    margin: 0 0 28px;
+    padding: 18px 0 22px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+}
+
+.folder-search label {
+    margin: 0 0 10px;
+}
+
+.folder-search-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 120px;
+    align-items: end;
+    gap: 10px;
+}
+
+.folder-create-dialog {
+    width: min(460px, calc(100% - 32px));
+    padding: 28px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--white);
+    color: var(--ink);
+    box-shadow: 0 24px 70px rgba(15, 23, 42, .22);
+}
+
+.folder-create-dialog::backdrop {
+    background: rgba(17, 24, 39, .42);
+}
+
+.folder-create-dialog h2 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.folder-create-dialog .eyebrow {
+    margin-bottom: 7px;
+    color: var(--accent);
+}
+
+.folder-dialog-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.dialog-close {
+    width: 34px;
+    min-height: 34px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 24px;
+}
+
+.folder-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 28px;
 }
 
 .folder-grid {
@@ -66,4 +139,19 @@
 .folder-delete {
     top: 9px;
     right: 6px;
+}
+
+@media (max-width: 720px) {
+    .list-actions {
+        width: 100%;
+    }
+
+    .list-actions .btn {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .folder-search-controls {
+        grid-template-columns: 1fr;
+    }
 }

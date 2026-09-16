@@ -10,20 +10,44 @@
 
     <div class="list-header">
         <h1 th:text="${browseMode} ? '논문 폴더' : (${selectedFolderName} ?: (${uncategorized} ? '미분류' : '논문 목록'))">논문 폴더</h1>
-        <a class="btn primary" th:href="@{/papers/upload}">+ 논문 등록</a>
+        <div class="list-actions">
+            <button class="btn" type="button" id="openFolderDialog">+ 폴더 생성</button>
+            <a class="btn primary" th:href="@{/papers/upload}">+ 논문 등록</a>
+        </div>
     </div>
+
+    <dialog class="folder-create-dialog" id="folderCreateDialog" aria-labelledby="folderDialogTitle">
+        <form th:action="@{/papers/folders}" method="post">
+            <div class="folder-dialog-heading">
+                <div>
+                    <p class="eyebrow">NEW FOLDER</p>
+                    <h2 id="folderDialogTitle">폴더 생성</h2>
+                </div>
+                <button class="dialog-close" type="button" id="closeFolderDialog" aria-label="닫기">×</button>
+            </div>
+            <label for="folderName">폴더 제목</label>
+            <input id="folderName" name="name" maxlength="100" required
+                   placeholder="예: 지압강도 관련" autocomplete="off">
+            <div class="folder-dialog-actions">
+                <button type="button" class="btn" id="cancelFolderDialog">취소</button>
+                <button type="submit" class="btn primary">폴더 만들기</button>
+            </div>
+        </form>
+    </dialog>
 
     <div class="alert info" th:if="${message}" th:text="${message}"></div>
     <div class="alert error" th:if="${error}" th:text="${error}"></div>
 
     <section class="folder-browser" th:if="${browseMode}">
-        <p class="folder-intro">폴더를 열어 그 안의 논문을 확인하세요.</p>
+        <p class="folder-intro">전체 폴더에서 논문을 검색하거나 폴더를 열어 확인하세요.</p>
 
-        <form class="folder-create" th:action="@{/papers/folders}" method="post">
-            <label for="folderName">새 폴더</label>
-            <input id="folderName" name="name" maxlength="100" required
-                   placeholder="예: 지압강도 관련" autocomplete="off">
-            <button type="submit" class="btn">폴더 만들기</button>
+        <form class="folder-search" th:action="@{/papers}" method="get">
+            <label for="folderSearch">전체 폴더에서 논문 검색</label>
+            <div class="folder-search-controls">
+                <input id="folderSearch" type="search" name="q"
+                       placeholder="제목 · 저자 · 메모 검색" autocomplete="off">
+                <button type="submit" class="btn primary">검색</button>
+            </div>
         </form>
 
         <div class="folder-grid">
@@ -139,6 +163,29 @@
         const actionSelect = document.getElementById('bulkAction');
         const targetFolder = document.getElementById('targetFolder');
         const bulkHint = document.getElementById('bulkHint');
+
+        const folderDialog = document.getElementById('folderCreateDialog');
+        const openFolderDialog = document.getElementById('openFolderDialog');
+        const closeFolderDialog = document.getElementById('closeFolderDialog');
+        const cancelFolderDialog = document.getElementById('cancelFolderDialog');
+        const folderName = document.getElementById('folderName');
+
+        function showFolderDialog() {
+            if (!folderDialog) return;
+            folderDialog.showModal();
+            if (folderName) folderName.focus();
+        }
+
+        function hideFolderDialog() {
+            if (folderDialog) folderDialog.close();
+        }
+
+        if (openFolderDialog) openFolderDialog.addEventListener('click', showFolderDialog);
+        if (closeFolderDialog) closeFolderDialog.addEventListener('click', hideFolderDialog);
+        if (cancelFolderDialog) cancelFolderDialog.addEventListener('click', hideFolderDialog);
+        if (folderDialog) folderDialog.addEventListener('click', function (event) {
+            if (event.target === folderDialog) hideFolderDialog();
+        });
 
         function refresh() {
             const n = document.querySelectorAll('.row-chk:checked').length;

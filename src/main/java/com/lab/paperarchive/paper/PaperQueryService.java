@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.text.Normalizer;
+
 @Service
 @RequiredArgsConstructor
 public class PaperQueryService {
@@ -19,8 +21,10 @@ public class PaperQueryService {
     public Page<PaperListItem> search(String keyword, String tag, Long folderId,
                                       boolean uncategorized, Pageable pageable) {
         String kw = StringUtils.hasText(keyword) ? keyword.trim() : "";
+        String kwNfc = Normalizer.normalize(kw, Normalizer.Form.NFC);
+        String kwNfd = Normalizer.normalize(kw, Normalizer.Form.NFD);
         String tg = StringUtils.hasText(tag) ? tag.trim() : "";
-        return paperRepository.search(kw, tg, folderId, uncategorized, pageable)
+        return paperRepository.search(kwNfc, kwNfd, tg, folderId, uncategorized, pageable)
                 .map(PaperListItem::from);
     }
 

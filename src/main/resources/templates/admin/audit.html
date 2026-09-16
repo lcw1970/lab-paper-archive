@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head><title>변경 이력</title></head>
+<body>
+<main layout:fragment="content" class="container">
+    <div class="admin-heading">
+        <div>
+            <p class="eyebrow">ADMIN</p>
+            <h1>변경 이력</h1>
+        </div>
+        <a class="btn" th:href="@{/admin/status}">운영 상태</a>
+    </div>
+
+    <p class="sub">논문·폴더·회원 관리 작업을 최신 순서로 표시합니다. 이 기능을 적용한 이후의 작업부터 기록됩니다.</p>
+
+    <form class="audit-search" th:action="@{/admin/audit}" method="get">
+        <input type="search" name="q" th:value="${q}"
+               placeholder="논문 제목 · 사용자 이메일 · 대상 검색" autocomplete="off">
+        <button type="submit" class="btn primary">검색</button>
+        <a class="btn ghost" th:href="@{/admin/audit}" th:if="${q != null and !q.isBlank()}">초기화</a>
+    </form>
+
+    <table>
+        <thead>
+        <tr><th>시각</th><th>사용자</th><th>작업</th><th>대상</th><th>내용</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="log : ${logs.content}">
+            <td class="nowrap" th:text="${#temporals.format(log.occurredAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+            <td th:text="${log.actorEmail}"></td>
+            <td><span class="audit-action" th:text="${log.action.label}"></span></td>
+            <td th:text="${log.targetType + (log.targetId != null ? ' #' + log.targetId : '')}"></td>
+            <td th:text="${log.description} ?: '-'"></td>
+        </tr>
+        <tr th:if="${logs.isEmpty()}">
+            <td colspan="5" class="empty" th:text="${q != null and !q.isBlank()} ? '검색 결과가 없습니다.' : '아직 기록된 변경이 없습니다.'"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <nav class="pagination" th:if="${logs.totalPages > 1}">
+        <a th:if="${!logs.first}" th:href="@{/admin/audit(page=${logs.number - 1}, q=${q})}">← 이전</a>
+        <span th:text="${logs.number + 1} + ' / ' + ${logs.totalPages}"></span>
+        <a th:if="${!logs.last}" th:href="@{/admin/audit(page=${logs.number + 1}, q=${q})}">다음 →</a>
+    </nav>
+</main>
+</body>
+</html>

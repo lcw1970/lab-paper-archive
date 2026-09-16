@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head><title>운영 상태</title></head>
+<body>
+<main layout:fragment="content" class="container">
+    <div class="admin-heading">
+        <div>
+            <p class="eyebrow">ADMIN</p>
+            <h1>운영 상태</h1>
+        </div>
+        <a class="btn" th:href="@{/admin/audit}">변경 이력</a>
+    </div>
+
+    <div class="alert error" th:each="warning : ${status.warnings}" th:text="${warning}"></div>
+    <div class="alert info" th:if="${#lists.isEmpty(status.warnings)}">현재 발견된 경고가 없습니다.</div>
+
+    <section class="status-grid">
+        <article class="status-card">
+            <span>데이터베이스</span>
+            <strong th:text="${status.databaseConnected ? '정상' : '오류'}">정상</strong>
+        </article>
+        <article class="status-card">
+            <span>저장 폴더 쓰기</span>
+            <strong th:text="${status.storageWritable ? '정상' : '불가'}">정상</strong>
+        </article>
+        <article class="status-card">
+            <span>사용 가능 공간</span>
+            <strong th:text="${status.storageUsable}">0 GB</strong>
+            <small th:text="'전체 ' + ${status.storageTotal}"></small>
+        </article>
+        <article class="status-card">
+            <span>활성 논문</span>
+            <strong th:text="${status.activePapers >= 0 ? status.activePapers + '편' : '확인 불가'}">0편</strong>
+            <small th:text="${status.deletedPapers >= 0 ? '휴지통 ' + status.deletedPapers + '편' : '휴지통 확인 불가'}"></small>
+        </article>
+        <article class="status-card">
+            <span>등록 원본 파일</span>
+            <strong th:text="${status.registeredFiles >= 0 ? status.registeredFiles + '개' : '확인 불가'}">0개</strong>
+            <small th:text="${status.missingOriginalFiles >= 0 ? '누락 ' + status.missingOriginalFiles + '개' : '누락 확인 불가'}"></small>
+        </article>
+        <article class="status-card">
+            <span>연결되지 않은 원본</span>
+            <strong th:text="${status.orphanOriginalFiles >= 0 ? status.orphanOriginalFiles + '개' : '확인 불가'}">0개</strong>
+            <small>자동으로 삭제하지 않습니다.</small>
+        </article>
+        <article class="status-card">
+            <span>보기용 PDF 사본</span>
+            <strong th:text="${status.readableCopies >= 0 ? status.readableCopies + '개' : '확인 불가'}">0개</strong>
+        </article>
+    </section>
+
+    <dl class="meta status-meta">
+        <dt>저장 경로</dt><dd th:text="${status.storageRoot}"></dd>
+        <dt>앱 시작 시각</dt><dd th:text="${#temporals.format(status.applicationStartedAt, 'yyyy-MM-dd HH:mm:ss')}"></dd>
+        <dt>마지막 확인</dt><dd th:text="${#temporals.format(status.checkedAt, 'yyyy-MM-dd HH:mm:ss')}"></dd>
+    </dl>
+</main>
+</body>
+</html>

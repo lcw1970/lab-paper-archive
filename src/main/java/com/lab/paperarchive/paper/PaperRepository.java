@@ -20,6 +20,8 @@ public interface PaperRepository extends JpaRepository<Paper, Long> {
 
     long countByDeletedAtIsNull();
 
+    long countByDeletedAtIsNotNull();
+
     long countByFolderIdAndDeletedAtIsNull(Long folderId);
 
     long countByFolderIsNullAndDeletedAtIsNull();
@@ -84,10 +86,13 @@ public interface PaperRepository extends JpaRepository<Paper, Long> {
            left join fetch p.folder
            left join p.tags t
            where p.deletedAt is null
-             and (:kw = ''
-                  or lower(p.title)   like lower(concat('%', :kw, '%'))
-                  or lower(p.authors) like lower(concat('%', :kw, '%'))
-                  or lower(p.memo)    like lower(concat('%', :kw, '%')))
+             and (:kwNfc = ''
+                  or lower(p.title)   like lower(concat('%', :kwNfc, '%'))
+                  or lower(p.title)   like lower(concat('%', :kwNfd, '%'))
+                  or lower(p.authors) like lower(concat('%', :kwNfc, '%'))
+                  or lower(p.authors) like lower(concat('%', :kwNfd, '%'))
+                  or lower(p.memo)    like lower(concat('%', :kwNfc, '%'))
+                  or lower(p.memo)    like lower(concat('%', :kwNfd, '%')))
              and (:tag = '' or lower(t.name) = lower(:tag))
              and (:folderId is null or p.folder.id = :folderId)
              and (:uncategorized = false or p.folder is null)
@@ -96,15 +101,19 @@ public interface PaperRepository extends JpaRepository<Paper, Long> {
            select count(distinct p) from Paper p
            left join p.tags t
            where p.deletedAt is null
-             and (:kw = ''
-                  or lower(p.title)   like lower(concat('%', :kw, '%'))
-                  or lower(p.authors) like lower(concat('%', :kw, '%'))
-                  or lower(p.memo)    like lower(concat('%', :kw, '%')))
+             and (:kwNfc = ''
+                  or lower(p.title)   like lower(concat('%', :kwNfc, '%'))
+                  or lower(p.title)   like lower(concat('%', :kwNfd, '%'))
+                  or lower(p.authors) like lower(concat('%', :kwNfc, '%'))
+                  or lower(p.authors) like lower(concat('%', :kwNfd, '%'))
+                  or lower(p.memo)    like lower(concat('%', :kwNfc, '%'))
+                  or lower(p.memo)    like lower(concat('%', :kwNfd, '%')))
              and (:tag = '' or lower(t.name) = lower(:tag))
              and (:folderId is null or p.folder.id = :folderId)
              and (:uncategorized = false or p.folder is null)
            """)
-    Page<Paper> search(@Param("kw") String keyword,
+    Page<Paper> search(@Param("kwNfc") String keywordNfc,
+                       @Param("kwNfd") String keywordNfd,
                        @Param("tag") String tag,
                        @Param("folderId") Long folderId,
                        @Param("uncategorized") boolean uncategorized,

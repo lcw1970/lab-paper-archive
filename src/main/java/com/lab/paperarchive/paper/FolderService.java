@@ -1,5 +1,7 @@
 package com.lab.paperarchive.paper;
 
+import com.lab.paperarchive.audit.AuditAction;
+import com.lab.paperarchive.audit.AuditLogService;
 import com.lab.paperarchive.common.exception.BusinessException;
 import com.lab.paperarchive.paper.dto.FolderSummary;
 import com.lab.paperarchive.storage.ReadablePaperStorage;
@@ -17,6 +19,7 @@ public class FolderService {
     private final FolderRepository folderRepository;
     private final PaperRepository paperRepository;
     private final ReadablePaperStorage readablePaperStorage;
+    private final AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public List<Folder> findAll() {
@@ -58,7 +61,8 @@ public class FolderService {
         if (folderRepository.findByNameIgnoreCase(name).isPresent()) {
             throw new BusinessException("같은 이름의 폴더가 이미 있습니다.");
         }
-        folderRepository.save(Folder.of(name));
+        Folder folder = folderRepository.save(Folder.of(name));
+        auditLogService.record(AuditAction.FOLDER_CREATE, "FOLDER", folder.getId(), folder.getName());
     }
 
     @Transactional
@@ -70,5 +74,7 @@ public class FolderService {
             readablePaperStorage.synchronize(paper);
         });
         folderRepository.delete(folder);
+        auditLogService.record(AuditAction.FOLDER_DELETE, "FOLDER", id,
+                folder.getName() + " · 논문 " + papers.size() + "편을 미분류로 이동");
     }
 }

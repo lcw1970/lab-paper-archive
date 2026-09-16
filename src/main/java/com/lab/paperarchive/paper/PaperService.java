@@ -1,5 +1,7 @@
 package com.lab.paperarchive.paper;
 
+import com.lab.paperarchive.audit.AuditAction;
+import com.lab.paperarchive.audit.AuditLogService;
 import com.lab.paperarchive.common.exception.BusinessException;
 import com.lab.paperarchive.paper.dto.PaperUploadRequest;
 import com.lab.paperarchive.paper.dto.PaperUpdateRequest;
@@ -15,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -29,6 +33,7 @@ public class PaperService {
     private final UserRepository userRepository;
     private final StorageService storageService;
     private final ReadablePaperStorage readablePaperStorage;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public Long upload(PaperUploadRequest request, Long uploaderId) {
@@ -72,6 +77,7 @@ public class PaperService {
 
         Long id = paperRepository.save(paper).getId();
         readablePaperStorage.synchronize(paper);
+        auditLogService.record(AuditAction.PAPER_UPLOAD, "PAPER", id, paper.getTitle());
         log.info("논문 등록: id={}, title={}, uploader={}", id, paper.getTitle(), uploader.getEmail());
         return id;
     }
@@ -82,6 +88,7 @@ public class PaperService {
                 .orElseThrow(() -> new BusinessException("논문을 찾을 수 없습니다."));
         paper.softDelete();
         readablePaperStorage.synchronize(paper);
+        auditLogService.record(AuditAction.PAPER_DELETE, "PAPER", paperId, paper.getTitle());
         // 실제 파일은 즉시 지우지 않는다. 휴지통 배치가 30일 후 정리한다.
     }
 
@@ -94,6 +101,7 @@ public class PaperService {
         }
         paper.restore();
         readablePaperStorage.synchronize(paper);
+        auditLogService.record(AuditAction.PAPER_RESTORE, "PAPER", paperId, paper.getTitle());
     }
 
     @Transactional
@@ -107,6 +115,8 @@ public class PaperService {
             paper.restore();
             readablePaperStorage.synchronize(paper);
         });
+        auditLogService.record(AuditAction.PAPER_RESTORE, "PAPER", null,
+                "일괄 복원 " + papers.size() + "편: " + summarizeIds(papers));
         return papers.size();
     }
 
@@ -121,6 +131,7 @@ public class PaperService {
         deleteFiles(paper);
         readablePaperStorage.removeCopies(paper.getId());
         paperRepository.delete(paper);
+        auditLogService.record(AuditAction.PAPER_PERMANENT_DELETE, "PAPER", paperId, paper.getTitle());
     }
 
     @Transactional
@@ -135,6 +146,8 @@ public class PaperService {
             readablePaperStorage.removeCopies(paper.getId());
         });
         paperRepository.deleteAll(papers);
+        auditLogService.record(AuditAction.PAPER_PERMANENT_DELETE, "PAPER", null,
+                "일괄 영구 삭제 " + papers.size() + "편: " + summarizeIds(papers));
         return papers.size();
     }
 
@@ -155,6 +168,7 @@ public class PaperService {
         paper.clearTags();
         attachTags(paper, request.getTags());
         readablePaperStorage.synchronize(paper);
+        auditLogService.record(AuditAction.PAPER_UPDATE, "PAPER", paperId, paper.getTitle());
     }
 
     @Transactional
@@ -162,10 +176,13 @@ public class PaperService {
         Paper paper = paperRepository.findByIdAndDeletedAtIsNull(paperId)
                 .orElseThrow(() -> new BusinessException("논문을 찾을 수 없습니다."));
 
+        String previousFolderName = folderName(paper.getFolder());
         Folder folder = folderId == null ? null : folderRepository.findById(folderId)
                 .orElseThrow(() -> new BusinessException("선택한 폴더를 찾을 수 없습니다."));
         paper.assignFolder(folder);
         readablePaperStorage.synchronize(paper);
+        auditLogService.record(AuditAction.PAPER_MOVE, "PAPER", paperId,
+                paper.getTitle() + " · " + previousFolderName + " → " + folderName(folder));
     }
 
     @Transactional
@@ -178,10 +195,14 @@ public class PaperService {
         if (papers.isEmpty()) {
             throw new BusinessException("이동할 논문을 찾을 수 없습니다.");
         }
+        String previousFolders = summarizeSourceFolders(papers);
         papers.forEach(paper -> {
             paper.assignFolder(folder);
             readablePaperStorage.synchronize(paper);
         });
+        auditLogService.record(AuditAction.PAPER_MOVE, "PAPER", null,
+                "일괄 이동 " + papers.size() + "편 · " + previousFolders + " → "
+                        + folderName(folder) + " · ID: " + summarizeIds(papers));
         return papers.size();
     }
 
@@ -197,6 +218,8 @@ public class PaperService {
             paper.softDelete();
             readablePaperStorage.synchronize(paper);
         });
+        auditLogService.record(AuditAction.PAPER_DELETE, "PAPER", null,
+                "일괄 휴지통 이동 " + papers.size() + "편: " + summarizeIds(papers));
         return papers.size();
     }
 
@@ -211,6 +234,27 @@ public class PaperService {
 
     private void deleteFiles(Paper paper) {
         paper.getFiles().forEach(file -> storageService.deletePermanently(file.getStoredPath()));
+    }
+
+    private String folderName(Folder folder) {
+        return folder == null ? "미분류" : folder.getName();
+    }
+
+    private String summarizeIds(List<Paper> papers) {
+        return papers.stream()
+                .map(Paper::getId)
+                .limit(20)
+                .map(String::valueOf)
+                .collect(java.util.stream.Collectors.joining(", "))
+                + (papers.size() > 20 ? " 외" : "");
+    }
+
+    private String summarizeSourceFolders(List<Paper> papers) {
+        Map<String, Long> counts = new LinkedHashMap<>();
+        papers.forEach(paper -> counts.merge(folderName(paper.getFolder()), 1L, Long::sum));
+        return counts.entrySet().stream()
+                .map(entry -> entry.getKey() + " " + entry.getValue() + "편")
+                .collect(java.util.stream.Collectors.joining(", "));
     }
 
     private void attachTags(Paper paper, String rawTags) {

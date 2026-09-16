@@ -1,6 +1,7 @@
 package com.lab.paperarchive.paper;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,4 +12,7 @@ public interface PaperFileRepository extends JpaRepository<PaperFile, Long> {
     Optional<PaperFile> findBySha256AndPaper_DeletedAtIsNull(String sha256);
 
     List<PaperFile> findByPaperIdOrderByVersionDesc(Long paperId);
+
+    @Query("select pf.storedPath from PaperFile pf")
+    List<String> findAllStoredPaths();
 }
