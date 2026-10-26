@@ -1,0 +1,32 @@
+.pagination.page-blocks {
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.page-blocks a,
+.page-blocks .current-page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0 10px;
+    border-radius: 7px;
+    text-decoration: none;
+}
+
+.page-blocks a:hover {
+    background: #f0fff6;
+    color: #087b3d;
+}
+
+.page-blocks a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.page-blocks .current-page {
+    background: var(--accent);
+    color: var(--white);
+}

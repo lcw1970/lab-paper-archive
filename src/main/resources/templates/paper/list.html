@@ -4,6 +4,7 @@
       layout:decorate="~{layout/layout}">
 <head>
     <title>논문 목록</title>
+    <link rel="stylesheet" th:href="@{/css/pagination.css(v=20261026a)}">
 </head>
 <body>
 <main layout:fragment="content" class="container">
@@ -147,12 +148,20 @@
         </table>
     </form>
 
-    <nav class="pagination" th:if="${!browseMode and papers.totalPages > 1}">
-        <a th:if="${!papers.first}"
-           th:href="@{/papers(page=${papers.number - 1}, q=${q}, tag=${tag}, folder=${folder}, uncategorized=${uncategorized})}">← 이전</a>
-        <span th:text="${papers.number + 1} + ' / ' + ${papers.totalPages}"></span>
-        <a th:if="${!papers.last}"
-           th:href="@{/papers(page=${papers.number + 1}, q=${q}, tag=${tag}, folder=${folder}, uncategorized=${uncategorized})}">다음 →</a>
+    <nav class="pagination page-blocks" aria-label="논문 목록 페이지"
+         th:if="${!browseMode and papers.totalPages > 1}"
+         th:with="start=${papers.number - papers.number % 5}, end=${start + 4 < papers.totalPages ? start + 4 : papers.totalPages - 1}">
+        <a th:if="${start > 0}" aria-label="이전 5페이지"
+           th:href="@{/papers(page=${start - 1}, size=${papers.size}, q=${q}, tag=${tag}, folder=${folder}, uncategorized=${uncategorized})}">← 이전</a>
+        <th:block th:each="pageNumber : ${#numbers.sequence(start, end)}">
+            <span th:if="${pageNumber == papers.number}" class="current-page" aria-current="page"
+                  th:text="${pageNumber + 1}"></span>
+            <a th:if="${pageNumber != papers.number}"
+               th:href="@{/papers(page=${pageNumber}, size=${papers.size}, q=${q}, tag=${tag}, folder=${folder}, uncategorized=${uncategorized})}"
+               th:text="${pageNumber + 1}"></a>
+        </th:block>
+        <a th:if="${end < papers.totalPages - 1}" aria-label="다음 5페이지"
+           th:href="@{/papers(page=${end + 1}, size=${papers.size}, q=${q}, tag=${tag}, folder=${folder}, uncategorized=${uncategorized})}">다음 →</a>
     </nav>
 
     <script>
