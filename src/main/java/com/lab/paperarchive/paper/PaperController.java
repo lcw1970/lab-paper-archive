@@ -7,6 +7,7 @@ import com.lab.paperarchive.user.LabUserDetails;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -33,12 +34,24 @@ public class PaperController {
                        @RequestParam(required = false) String tag,
                        @RequestParam(required = false) Long folder,
                        @RequestParam(defaultValue = "false") boolean uncategorized,
+                       @RequestParam(defaultValue = "default") String order,
                        @PageableDefault(size = 20, sort = "createdAt",
                                direction = Sort.Direction.DESC) Pageable pageable,
                        Model model) {
         boolean browseMode = folder == null && !uncategorized
                 && !StringUtils.hasText(q) && !StringUtils.hasText(tag);
-        model.addAttribute("papers", paperQueryService.search(q, tag, folder, uncategorized, pageable));
+        String selectedOrder = switch (order) {
+            case "title", "date-desc", "date-asc" -> order;
+            default -> "default";
+        };
+        Sort sort = switch (selectedOrder) {
+            case "title" -> Sort.by("title", "id").ascending();
+            case "date-asc" -> Sort.by("createdAt", "id").ascending();
+            default -> Sort.by("createdAt", "id").descending();
+        };
+        Pageable sortedPage = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+        model.addAttribute("papers", paperQueryService.search(q, tag, folder, uncategorized, sortedPage));
+        model.addAttribute("order", selectedOrder);
         model.addAttribute("q", q);
         model.addAttribute("tag", tag);
         model.addAttribute("folder", folder);

@@ -5,6 +5,7 @@
 <head>
     <title>논문 목록</title>
     <link rel="stylesheet" th:href="@{/css/pagination.css(v=20261026a)}">
+    <link rel="stylesheet" th:href="@{/css/paper-list.css(v=20261109a)}">
 </head>
 <body>
 <main layout:fragment="content" class="container">
@@ -73,11 +74,12 @@
 
     <a class="back" th:if="${!browseMode}" th:href="@{/papers}">← 폴더 목록</a>
 
-    <form class="search-bar" th:action="@{/papers}" method="get" th:if="${!browseMode}">
+    <form id="paperSearch" class="search-bar" th:action="@{/papers}" method="get" th:if="${!browseMode}">
         <input type="text" name="q" th:value="${q}"
                placeholder="제목 · 저자 · 메모 검색" autocomplete="off">
         <input type="hidden" name="tag" th:value="${tag}">
         <input type="hidden" name="uncategorized" th:value="${uncategorized}">
+        <input type="hidden" name="size" th:value="${papers.size}">
         <select name="folder" aria-label="폴더 선택" th:if="${!uncategorized}">
             <option value="">전체 폴더</option>
             <option th:each="f : ${folders}" th:value="${f.id}" th:text="${f.name}"
@@ -90,15 +92,26 @@
 
     <div class="tag-filter" th:if="${!browseMode and !#lists.isEmpty(tags)}">
         <a th:each="t : ${tags}"
-           th:href="@{/papers(tag=${t.name}, q=${q}, folder=${folder}, uncategorized=${uncategorized})}"
+           th:href="@{/papers(tag=${t.name}, q=${q}, folder=${folder}, uncategorized=${uncategorized}, order=${order}, size=${papers.size})}"
            th:text="${t.name}"
            th:class="${tag != null and tag == t.name} ? 'active' : ''">태그</a>
     </div>
 
-    <p class="result-count" th:if="${!browseMode}">
-        총 <strong th:text="${papers.totalElements}">0</strong>편
-        <span th:if="${q != null}" th:text="'· 검색어: ' + ${q}"></span>
-    </p>
+    <div class="list-results-row" th:if="${!browseMode}">
+        <p class="result-count">
+            총 <strong th:text="${papers.totalElements}">0</strong>편
+            <span th:if="${!#strings.isEmpty(q)}" th:text="'· 검색어: ' + ${q}"></span>
+        </p>
+        <label class="paper-sort" for="paperOrder">
+            정렬
+            <select id="paperOrder" name="order" form="paperSearch" onchange="this.form.requestSubmit()">
+                <option value="default" th:selected="${order == 'default'}">기본순</option>
+                <option value="title" th:selected="${order == 'title'}">이름순 (가나다·ABC)</option>
+                <option value="date-desc" th:selected="${order == 'date-desc'}">등록일 내림차순 (최신순)</option>
+                <option value="date-asc" th:selected="${order == 'date-asc'}">등록일 오름차순 (오래된순)</option>
+            </select>
+        </label>
+    </div>
 
     <form th:if="${!browseMode}" th:action="@{/papers/bulk-download}" method="post" id="bulkForm">
         <div class="bulk-bar">
@@ -152,16 +165,16 @@
          th:if="${!browseMode and papers.totalPages > 1}"
          th:with="start=${papers.number - papers.number % 5}, end=${start + 4 < papers.totalPages ? start + 4 : papers.totalPages - 1}">
         <a th:if="${start > 0}" aria-label="이전 5페이지"
-           th:href="@{/papers(page=${start - 1}, size=${papers.size}, q=${q}, tag=${tag}, folder=${folder}, uncategorized=${uncategorized})}">← 이전</a>
+           th:href="@{/papers(page=${start - 1}, size=${papers.size}, q=${q}, tag=${tag}, folder=${folder}, uncategorized=${uncategorized}, order=${order})}">← 이전</a>
         <th:block th:each="pageNumber : ${#numbers.sequence(start, end)}">
             <span th:if="${pageNumber == papers.number}" class="current-page" aria-current="page"
                   th:text="${pageNumber + 1}"></span>
             <a th:if="${pageNumber != papers.number}"
-               th:href="@{/papers(page=${pageNumber}, size=${papers.size}, q=${q}, tag=${tag}, folder=${folder}, uncategorized=${uncategorized})}"
+               th:href="@{/papers(page=${pageNumber}, size=${papers.size}, q=${q}, tag=${tag}, folder=${folder}, uncategorized=${uncategorized}, order=${order})}"
                th:text="${pageNumber + 1}"></a>
         </th:block>
         <a th:if="${end < papers.totalPages - 1}" aria-label="다음 5페이지"
-           th:href="@{/papers(page=${end + 1}, size=${papers.size}, q=${q}, tag=${tag}, folder=${folder}, uncategorized=${uncategorized})}">다음 →</a>
+           th:href="@{/papers(page=${end + 1}, size=${papers.size}, q=${q}, tag=${tag}, folder=${folder}, uncategorized=${uncategorized}, order=${order})}">다음 →</a>
     </nav>
 
     <script>
